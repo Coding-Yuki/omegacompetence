@@ -18,9 +18,14 @@ export function useAuth() {
   const isFetchingRef = useRef(false);
 
   const fetchUserRole = useCallback(async (currentUser: User) => {
-    // Skip if we're already fetching or already fetched for this user
-    if (isFetchingRef.current || fetchedRoleForUid.current === currentUser.uid) {
+    // Skip server call if we've already fetched for this user, but don't skip loading state update
+    if (fetchedRoleForUid.current === currentUser.uid) {
+      setLoading(false);
       return;
+    }
+    
+    if (isFetchingRef.current) {
+      return; // Already fetching, don't start another request
     }
     
     isFetchingRef.current = true;
@@ -55,6 +60,8 @@ export function useAuth() {
       fetchedRoleForUid.current = currentUser.uid;
     } finally {
       isFetchingRef.current = false;
+      // Only set loading to false after role is fully determined
+      setLoading(false);
     }
   }, []);
 
@@ -70,12 +77,12 @@ export function useAuth() {
       
       if (currentUser) {
         fetchUserRole(currentUser);
+        // Keep loading true while fetchUserRole runs; it will set loading to false when done
       } else {
         setRole(null);
         fetchedRoleForUid.current = null; // Reset when user logs out
+        setLoading(false); // User logged out, we're done loading
       }
-      
-      setLoading(false);
     });
 
     return () => unsubscribe();

@@ -50,11 +50,19 @@ export default function AuthPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Reset redirect guard when user logs out
+  useEffect(() => {
+    if (!user) {
+      hasRedirectedRef.current = false;
+      setError("");
+    }
+  }, [user]);
+
   useEffect(() => {
     // Guard: prevent multiple redirects
     if (hasRedirectedRef.current) return;
     
-    if (!loading && user) {
+    if (!loading && user && role) {
       hasRedirectedRef.current = true;
       if (role === "admin") {
         router.push("/admin");
@@ -64,7 +72,21 @@ export default function AuthPage() {
     }
   }, [user, role, loading, router]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<AuthInput>({
+  // Safety timeout: if user is set but role is not fetched after 5 seconds, show error
+  useEffect(() => {
+    if (!user || role) return; // Skip if no user or role is already set
+    
+    const timeoutId = setTimeout(() => {
+      if (!hasRedirectedRef.current) {
+        setError("Impossible de charger votre profil. Veuillez réessayer.");
+        setIsLoading(false);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [user, role]);
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<AuthInput>({
     resolver: zodResolver(authSchema),
     defaultValues: { email: "", password: "" },
   });
@@ -88,41 +110,21 @@ export default function AuthPage() {
   }, [x, y]);
 
   async function onSubmit(data: AuthInput) {
+    if (isLoading) return; // Prevent multiple submissions
     setIsLoading(true);
     setError("");
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
+      // Success: let useAuth handle redirect via useEffect
     } catch (err: any) {
       if (err.code === "auth/invalid-credential") setError("Identifiants non reconnus.");
       else setError("Anomalie système détectée.");
       setIsLoading(false);
+      reset({ email: data.email, password: "" }); // Clear password on error, keep email
     }
   }
 
-  const [authError, setAuthError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Once Firebase confirms a user, call the action ourselves so we can show any error string
-    if (!loading && user && !authError) {
-      (async () => {
-        const res = await getUserRole(user.uid, user.email || "");
-        console.log("AUTH_ACTION_ERROR:", res);
-        if (res && (res as any).error) {
-          setAuthError((res as any).error as string);
-        }
-      })();
-    }
-  }, [loading, user, authError]);
-
-  if (authError) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-6" suppressHydrationWarning>
-        <div className="max-w-3xl w-full p-8 rounded-2xl border-4 border-red-600 bg-red-50 text-red-700 font-extrabold text-2xl md:text-3xl break-words shadow-2xl">
-          ⚠️ {authError}
-        </div>
-      </div>
-    );
-  }
 
   if (!mounted || loading || user) {
     return (

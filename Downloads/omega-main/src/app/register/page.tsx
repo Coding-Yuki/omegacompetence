@@ -34,7 +34,7 @@ export default function RegisterPage() {
     // Guard: prevent multiple redirects
     if (hasRedirectedRef.current) return;
     
-    if (!loading && user) {
+    if (!loading && user && role) {
       hasRedirectedRef.current = true;
       if (role === "admin") {
         router.push("/admin");
@@ -96,18 +96,26 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterInput) {
     setIsLoading(true);
     try {
+      // Validate admin code BEFORE creating account
+      const ADMIN_SECRET_CODE = "OMEGA-COMPETENCE-2026";
+      if (data.adminCode && data.adminCode !== ADMIN_SECRET_CODE) {
+        toast.error("Code invalide", { description: "Le code d'accès administrateur est incorrect." });
+        setIsLoading(false);
+        return;
+      }
+
       const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const res = await assignUserRole(cred.user.uid, data.email, data.adminCode);
       
       if (res.success) {
         toast.success("Profil synchronisé", { description: "Connexion au Neural Core établie." });
-        router.push(res.role === "admin" ? "/admin" : "/my-tickets");
+        // Let the useEffect handle redirect once auth state settles
       } else {
         toast.error("Erreur de rôle", { description: res.error });
+        setIsLoading(false);
       }
     } catch (err: any) {
       toast.error("Anomalie système", { description: err.message || "Impossible de finaliser l'inscription." });
-    } finally {
       setIsLoading(false);
     }
   }
