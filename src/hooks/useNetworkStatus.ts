@@ -15,7 +15,7 @@ export function useNetworkStatus() {
     const handleOnline = () => {
       setIsOnline(true);
       toast.success("Réseau rétabli", {
-        description: "Connexion sécurisée avec le Neural Core rétablie.",
+        description: "Connexion rétablie.",
       });
     };
 

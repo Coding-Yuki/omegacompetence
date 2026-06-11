@@ -81,6 +81,8 @@ export default function EmployeeDashboard() {
     });
   }, []);
 
+  const userName = (user as any)?.email?.split("@")[0] ?? "Agent";
+
   const handleSuccess = () => {
     setDialogOpen(false);
     loadTickets();
@@ -111,18 +113,15 @@ export default function EmployeeDashboard() {
         <motion.div variants={staggerContainer} initial="hidden" animate="show">
           <motion.div variants={springCard} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 backdrop-blur-md mb-4 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-                <Zap className="h-3.5 w-3.5 text-blue-400" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300">Portail Support</span>
-              </div>
-              <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">Tableau de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">bord</span></h1>
-              <p className="text-muted-foreground text-sm">Visualisez vos incidents et suivez les actions IA en temps réel.</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-primary/80 font-semibold mb-2">Bienvenue</p>
+              <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">Bonjour, {userName}</h1>
+              <p className="text-muted-foreground text-sm max-w-xl">Voici vos tickets actifs. Soumettez un nouveau ticket dès que vous observez un incident.</p>
             </div>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger className="group neo-button inline-flex items-center justify-center rounded-2xl bg-primary hover:opacity-90 text-primary-foreground shadow-md transition-all h-12 px-6 font-bold border-none cursor-pointer">
+              <DialogTrigger className="group inline-flex items-center justify-center rounded-2xl bg-primary hover:opacity-90 text-primary-foreground shadow-md transition-all h-12 px-6 font-bold border-none cursor-pointer">
                   <PlusCircle className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-500" />
-                  Initialiser Requête
+                  Soumettre un ticket
               </DialogTrigger>
               <DialogContent className="sm:max-w-[700px] bg-popover/90 backdrop-blur-3xl border-border text-popover-foreground shadow-2xl p-0 overflow-hidden rounded-[2.5rem]">
                 <div className="p-8 relative">
@@ -133,7 +132,7 @@ export default function EmployeeDashboard() {
                       <ShieldCheck className="h-8 w-8 text-blue-500" /> Anomalie
                     </DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground mt-1">
-                      Le Neural Core analysera votre diagnostic en temps réel.
+                      Votre signalement sera traité immédiatement.
                     </DialogDescription>
                   </DialogHeader>
 
@@ -149,21 +148,24 @@ export default function EmployeeDashboard() {
               {[1, 2, 3].map(i => <div key={i} className="h-28 w-full rounded-[2rem] bg-muted/50 animate-pulse border border-border/50" />)}
             </div>
           ) : tickets.length === 0 ? (
-            <motion.div variants={springCard} className="mt-20 flex flex-col items-center text-center">
+            <motion.div variants={springCard} className="mt-20 flex flex-col items-center text-center gap-6">
               <motion.div 
                 animate={{ y: [0, -20, 0], scale: [1, 1.05, 1] }} 
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="relative mb-10"
+                className="relative mb-4"
               >
                 <div className="absolute inset-0 bg-blue-500/20 blur-[60px] rounded-full scale-150" />
-                <div className="h-32 w-32 rounded-full border border-border bg-card/50 backdrop-blur-xl flex items-center justify-center relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
-                  <CheckCircle2 className="h-12 w-12 text-blue-400 opacity-80" />
+                <div className="h-28 w-28 rounded-full border border-border bg-card/50 backdrop-blur-xl flex items-center justify-center relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                  <CheckCircle2 className="h-10 w-10 text-blue-400 opacity-90" />
                 </div>
               </motion.div>
-              <h3 className="text-3xl font-black text-foreground mb-3 tracking-tight">Système Nominal</h3>
-              <p className="text-muted-foreground text-sm max-w-sm leading-relaxed mb-8">
-                Vous n'avez remonté aucune anomalie. L'intelligence artificielle d'OMEGA veille sur votre environnement.
+              <h3 className="text-3xl font-black text-foreground mb-2 tracking-tight">Votre file est vide</h3>
+              <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
+                Aucun ticket n'a encore été créé. Lancez la maintenance en soumettant une nouvelle demande.
               </p>
+              <button onClick={() => setDialogOpen(true)} className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/20 transition hover:bg-primary/90">
+                Soumettre un ticket
+              </button>
             </motion.div>
           ) : (
             <motion.div variants={staggerContainer} className="grid gap-5">
@@ -176,7 +178,7 @@ export default function EmployeeDashboard() {
                   
                   return (
                     <motion.div key={ticket.id} variants={springCard} layout>
-                      <div className={`bento-card p-5 flex flex-col gap-4 group rounded-2xl border transition-all relative overflow-hidden ${
+                      <div className={`bento-card p-5 flex flex-col gap-4 group rounded-3xl border transition-all relative overflow-hidden ${
                         ticket.seminarUrgency && ticket.status === 'open' 
                           ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/30' 
                           : 'bg-card/30 border-border/50 hover:border-primary/30'
@@ -184,73 +186,64 @@ export default function EmployeeDashboard() {
                         {ticket.seminarUrgency && ticket.status === 'open' && (
                           <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
                         )}
-                        
-                        {/* Header: ID, Submitter & Category */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/30 pb-2.5 text-xs">
-                          <div className="flex items-center gap-2 font-mono text-muted-foreground">
-                            <span className="bg-muted px-2 py-0.5 rounded text-[10px] font-bold text-foreground/80">#{ticket.id.substring(0, 8)}</span>
-                            <span>•</span>
-                            <span className="truncate max-w-[150px] sm:max-w-[250px]">{ticket.submittedBy}</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground font-mono text-[11px]">{timeElapsed}</span>
-                            <span className="text-muted-foreground/30">|</span>
-                            <span className="flex items-center gap-1 bg-muted/50 border border-border/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-foreground/70">
-                              {ticket.category === 'hardware' && <Monitor className="h-3 w-3 text-blue-400" />}
-                              {ticket.category === 'network' && <Wifi className="h-3 w-3 text-purple-400" />}
-                              {ticket.category === 'auth' && <Lock className="h-3 w-3 text-orange-400" />}
-                              {ticket.category === 'software' && <Cpu className="h-3 w-3 text-pink-400" />}
-                              {ticket.category === 'other' && <Server className="h-3 w-3 text-muted-foreground" />}
-                              {ticket.category || 'autre'}
-                            </span>
-                          </div>
-                        </div>
 
-                        {/* Title & Desc */}
-                        <div className="space-y-1.5">
-                          <h3 className="font-bold text-base md:text-lg text-foreground leading-snug group-hover:text-primary transition-colors">
-                            {ticket.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                            {ticket.description}
-                          </p>
-                        </div>
+                        <div className="flex flex-col gap-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-semibold text-lg text-foreground truncate">{ticket.title}</h3>
+                                {ticket.status === 'open' ? (
+                                  <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> En traitement
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Résolu
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{ticket.description}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                              <span className="inline-flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-full border border-border/50 uppercase tracking-wider">
+                                #{ticket.id.substring(0, 8)}
+                              </span>
+                              <span className="inline-flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-full border border-border/50 uppercase tracking-wider">
+                                {timeElapsed}
+                              </span>
+                            </div>
+                          </div>
 
-                        {/* Footer: Priority & Status */}
-                        <div className="flex items-center justify-between pt-2.5 border-t border-border/30 text-xs">
-                          <div className="flex items-center gap-2">
-                            {isHigh && (
-                              <span className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                                <AlertTriangle className="h-3 w-3" /> Urgent
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border/30 pt-3 text-sm">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="inline-flex items-center gap-1 bg-muted/50 border border-border/50 px-3 py-1 rounded-full text-[11px] uppercase tracking-wider">
+                                {ticket.category === 'hardware' && <Monitor className="h-3 w-3 text-blue-400" />}
+                                {ticket.category === 'network' && <Wifi className="h-3 w-3 text-purple-400" />}
+                                {ticket.category === 'auth' && <Lock className="h-3 w-3 text-orange-400" />}
+                                {ticket.category === 'software' && <Cpu className="h-3 w-3 text-pink-400" />}
+                                {ticket.category === 'other' && <Server className="h-3 w-3 text-muted-foreground" />}
+                                {ticket.category || 'autre'}
                               </span>
-                            )}
-                            {isMedium && (
-                              <span className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                                <AlertCircle className="h-3 w-3" /> Alerte
-                              </span>
-                            )}
-                            {isLow && (
-                              <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground border border-border/50 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider">
-                                Standard
-                              </span>
-                            )}
+                              {isHigh && (
+                                <span className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-300 border border-orange-500/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                  <AlertTriangle className="h-3 w-3" /> Haute
+                                </span>
+                              )}
+                              {isMedium && (
+                                <span className="inline-flex items-center gap-1 bg-yellow-500/10 text-amber-300 border border-yellow-500/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                  <Zap className="h-3 w-3" /> Moyenne
+                                </span>
+                              )}
+                              {isLow && (
+                                <span className="inline-flex items-center gap-1 bg-muted/60 text-muted-foreground border border-border/40 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider">
+                                  <ShieldCheck className="h-3 w-3" /> Faible
+                                </span>
+                              )}
+                            </div>
 
                             {ticket.seminarUrgency && (
-                              <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.15)]">
+                              <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.15)]">
                                 Séminaire
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {ticket.status === 'open' ? (
-                              <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                <span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> En traitement
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Résolu
                               </span>
                             )}
                           </div>

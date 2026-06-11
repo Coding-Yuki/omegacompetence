@@ -139,7 +139,7 @@ export default function AdminDashboard() {
       const elapsed = currentTime - submitted;
       const limit = 2 * 60 * 60 * 1000;
       const remaining = limit - elapsed;
-      if (remaining <= 0) return { text: "SLA DÉPASSÉ", urgent: true };
+      if (remaining <= 0) return { text: "DÉLAI DÉPASSÉ", urgent: true };
       const hours = Math.floor(remaining / (1000 * 60 * 60));
       const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
       return { text: `${hours}h ${mins}m restants`, urgent: remaining < 15 * 60 * 1000 };
@@ -180,19 +180,10 @@ export default function AdminDashboard() {
           
           <motion.div variants={springCard} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 backdrop-blur-md mb-4 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-                <LayoutGrid className="h-3.5 w-3.5 text-blue-400" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300">Command Level</span>
-              </div>
-              <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight mb-2">Neural <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Core</span></h1>
-              <p className="text-muted-foreground text-sm max-w-md leading-relaxed">Supervision IA des incidents et audit trail certifié ISO.</p>
+              <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight mb-2">Tableau de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">bord</span></h1>
+              <p className="text-muted-foreground text-sm max-w-md leading-relaxed">Gestion des incidents et audit trail.</p>
             </div>
             
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-mono hidden sm:inline-block border border-border px-3 py-1.5 rounded-lg bg-muted/50">
-                Press <kbd className="font-sans font-bold text-foreground mx-1">Ctrl+K</kbd> for Command Palette
-              </span>
-            </div>
           </motion.div>
 
           {fetching && tickets.length === 0 ? (
@@ -206,11 +197,11 @@ export default function AdminDashboard() {
                 {[
                   { title: "Volume Global", icon: Activity, val: stats.total, color: "text-blue-400", glow: "border-blue-500/20 hover:border-blue-500/40 shadow-blue-950/20", desc: "Incidents totaux enregistrés" },
                   { title: "Flux Actifs", icon: AlertCircle, val: stats.open, color: "text-orange-400", glow: "border-orange-500/20 hover:border-orange-500/40 shadow-orange-950/20", desc: "Nécessite une intervention" },
-                  { title: "Anomalies Critiques", icon: Clock, val: stats.urgent, color: "text-red-500", glow: "border-red-500/25 hover:border-red-500/50 shadow-red-950/35", desc: "Hors SLA ou Priorité Haute" },
+                  { title: "Anomalies Critiques", icon: Clock, val: stats.urgent, color: "text-red-500", glow: "border-red-500/25 hover:border-red-500/50 shadow-red-950/35", desc: "Hors délai ou Haute priorité" },
                   { title: "Résolution Globale", icon: CheckCircle2, val: `${stats.resolutionRate}%`, color: "text-green-400", glow: "border-green-500/20 hover:border-green-500/40 shadow-green-950/20", desc: `${stats.resolved} incidents résolus` }
                 ].map((stat, i) => (
                   <motion.div key={i} variants={springCard}>
-                    <Card className={`bento-card border rounded-2xl overflow-hidden bg-card/40 backdrop-blur-xl transition-all duration-300 ${stat.glow} shadow-xl hover:-translate-y-1`}>
+                    <Card className={`bento-card h-full border rounded-2xl overflow-hidden bg-card/40 backdrop-blur-xl transition-all duration-300 ${stat.glow} shadow-xl hover:-translate-y-1 flex flex-col justify-between`}>
                       <CardHeader className="pb-1 pt-5 px-5">
                         <CardTitle className={`text-xs font-bold ${stat.color} uppercase tracking-widest flex items-center justify-between`}>
                           <span className="flex items-center gap-2">
@@ -219,8 +210,8 @@ export default function AdminDashboard() {
                           </span>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="pb-5 px-5">
-                        <div className="text-4xl font-extrabold text-foreground tracking-tight mb-1">{stat.val}</div>
+                      <CardContent className="pb-5 px-5 flex-1">
+                        <div className="text-4xl font-extrabold text-foreground tracking-tight mb-2">{stat.val}</div>
                         <p className="text-xs text-muted-foreground font-medium">{stat.desc}</p>
                       </CardContent>
                     </Card>
@@ -233,8 +224,8 @@ export default function AdminDashboard() {
                 <motion.div variants={springCard} className="lg:col-span-2">
                   <Card className="bento-card h-full flex flex-col rounded-[2rem] overflow-hidden">
                     <CardHeader className="border-b border-border/50 pb-5">
-                      <CardTitle className="text-sm font-bold text-foreground">Télémétrie du Système</CardTitle>
-                      <CardDescription className="text-xs text-muted-foreground mt-1">Analyse de charge sur 7 jours.</CardDescription>
+                      <CardTitle className="text-sm font-bold text-foreground">Statistiques du Système</CardTitle>
+                      <CardDescription className="text-xs text-muted-foreground mt-1">Analyse sur 7 jours.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6 flex-1 min-h-[350px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -265,7 +256,7 @@ export default function AdminDashboard() {
                   <Card className="bento-card h-full flex flex-col rounded-[2rem] overflow-hidden">
                     <CardHeader className="border-b border-border/50 pb-4 bg-muted/30">
                       <CardTitle className="text-[11px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-                        <Terminal className="h-4 w-4" /> Secure Audit Trail
+                        <Terminal className="h-4 w-4" /> Journal d'audit
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0 overflow-hidden flex-1 relative">
@@ -308,8 +299,8 @@ export default function AdminDashboard() {
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border text-popover-foreground rounded-xl">
                         <SelectItem value="all">Tous les états</SelectItem>
-                        <SelectItem value="open">Anomalies Actives</SelectItem>
-                        <SelectItem value="resolved">Noeuds Réparés</SelectItem>
+                        <SelectItem value="open">Ouverts</SelectItem>
+                        <SelectItem value="resolved">Résolus</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={priorityFilter} onValueChange={(val) => setPriorityFilter(val || "all")}>
@@ -317,9 +308,9 @@ export default function AdminDashboard() {
                         <SelectValue placeholder="Toutes les priorités" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border text-popover-foreground rounded-xl">
-                        <SelectItem value="all">Toutes criticités</SelectItem>
-                        <SelectItem value="high">Alerte Rouge</SelectItem>
-                        <SelectItem value="medium">Avertissement</SelectItem>
+                        <SelectItem value="all">Toutes priorités</SelectItem>
+                        <SelectItem value="high">Haute</SelectItem>
+                        <SelectItem value="medium">Moyenne</SelectItem>
                         <SelectItem value="low">Standard</SelectItem>
                       </SelectContent>
                     </Select>
@@ -332,23 +323,23 @@ export default function AdminDashboard() {
                       <p className="text-sm text-muted-foreground max-w-[300px]">Aucune anomalie ne correspond à cette matrice de filtrage.</p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/30 border-b border-border/50 text-muted-foreground uppercase text-[10px] font-bold tracking-widest">
+                    <div className="overflow-x-auto rounded-3xl border border-border/30 bg-card/30 shadow-inner">
+                      <table className="w-full min-w-full text-sm text-left">
+                        <thead className="bg-muted/25 border-b border-border/50 text-muted-foreground uppercase text-[10px] font-bold tracking-widest">
                           <tr>
                             <th className="px-6 py-5">Entité &amp; Signature</th>
                             <th className="px-6 py-5">Catégorie</th>
-                            <th className="px-6 py-5">SLA / Criticité</th>
+                            <th className="px-6 py-5">Délai / Priorité</th>
                             <th className="px-6 py-5">État</th>
-                            <th className="px-6 py-5">Horodatage</th>
-                            <th className="px-6 py-5 text-right">Contrôle</th>
+                            <th className="px-6 py-5">Date et heure</th>
+                            <th className="px-6 py-5 text-right">Actions</th>
                           </tr>
                         </thead>
                         <motion.tbody 
                           variants={staggerContainer}
                           initial="hidden"
                           animate="show"
-                          className="divide-y divide-border/50"
+                          className="divide-y divide-border/50 bg-transparent"
                         >
                           <AnimatePresence>
                             {filteredTickets.map((ticket) => {
@@ -362,7 +353,7 @@ export default function AdminDashboard() {
                                   exit={{ opacity: 0, x: -20, scale: 0.95 }}
                                   className={`group hover:bg-muted/40 transition-colors duration-300 relative ${isUrgentSLA ? 'bg-red-500/5 dark:bg-red-950/10' : ''}`}
                                 >
-                                  <td className={`absolute left-0 top-0 bottom-0 w-[2px] transition-opacity duration-300 ${isUrgentSLA ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] opacity-100' : 'bg-blue-500 opacity-0 group-hover:opacity-100 shadow-[0_0_10px_rgba(59,130,246,0.8)]'}`} />
+                                  <td className={`absolute left-0 top-0 bottom-0 w-[2px] transition-opacity duration-300 ${isUrgentSLA ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] opacity-100' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]'}`} />
                                   
                                   <td className="px-6 py-5 font-medium">
                                     <div className="flex flex-col gap-1">
@@ -429,7 +420,7 @@ export default function AdminDashboard() {
 
                                   <td className="px-6 py-5 text-right">
                                     <DropdownMenu>
-                                      <DropdownMenuTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 inline-flex items-center justify-center cursor-pointer shadow-sm border border-transparent hover:border-border">
+                                      <DropdownMenuTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-all duration-300 focus:opacity-100 inline-flex items-center justify-center cursor-pointer shadow-sm border border-transparent hover:border-border">
                                           <MoreVertical className="h-4 w-4" />
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end" className="w-[180px] bg-popover/90 backdrop-blur-xl border-border text-popover-foreground shadow-2xl rounded-xl p-2">
@@ -438,14 +429,14 @@ export default function AdminDashboard() {
                                             className="text-green-500 focus:bg-green-500/10 rounded-lg cursor-pointer text-xs font-bold py-2.5 mb-1"
                                             onClick={() => handleStatusChange(ticket.id, 'resolved')}
                                           >
-                                            <CheckCircle2 className="mr-2 h-4 w-4" /> Purger l&apos;anomalie
+                                            <CheckCircle2 className="mr-2 h-4 w-4" /> Marquer comme résolu
                                           </DropdownMenuItem>
                                         ) : (
                                           <DropdownMenuItem 
                                             className="text-orange-500 focus:bg-orange-500/10 rounded-lg cursor-pointer text-xs font-bold py-2.5 mb-1"
                                             onClick={() => handleStatusChange(ticket.id, 'open')}
                                           >
-                                            <AlertCircle className="mr-2 h-4 w-4" /> Réactiver le flux
+                                            <AlertCircle className="mr-2 h-4 w-4" /> Réouvrir
                                           </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>

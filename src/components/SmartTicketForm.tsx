@@ -65,7 +65,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
 
   const description = watch("description");
 
-  // NLP: Auto-catégorisation et Ticket Deflection
+  // Auto-catégorisation et suggestions
   useEffect(() => {
     if (!description) {
       setSuggestedCategory(null);
@@ -112,7 +112,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
     try {
       const res = await createTicket(data, userEmail);
       if (res.success) {
-        toast.success("Anomalie signalée", { description: "Le système Neural Core a pris en charge votre requête." });
+        toast.success("Anomalie signalée", { description: "Votre signalement a été reçu." });
         reset();
         onSuccess();
       } else {
@@ -161,7 +161,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
                       initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
                       className="text-green-400 flex items-center gap-1 font-bold text-[9px] uppercase tracking-wider"
                     >
-                      <Sparkles className="h-3 w-3" /> IA Suggérée
+                      <Sparkles className="h-3 w-3" /> Catégorie suggérée
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -213,7 +213,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
                 <div className="p-4 rounded-xl bg-blue-900/10 border border-blue-500/20 backdrop-blur-xl flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-blue-400 font-bold text-xs">
                     <Lightbulb className="h-4 w-4 text-amber-400" />
-                    <span>💡 Solution Rapide Suggérée</span>
+                    <span>💡 Recommandation rapide</span>
                   </div>
                   <h4 className="text-foreground font-bold text-xs">{DEFLECTION_SOLUTIONS[deflectionKey].title}</h4>
                   <ul className="space-y-1">

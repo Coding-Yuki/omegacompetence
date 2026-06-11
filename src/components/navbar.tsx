@@ -2,18 +2,17 @@
 
 import { useAuth } from "@/hooks/useAuth";
 // Firebase imports removed – auth will be handled via JWT.
-import { useRouter } from "next/navigation";
+import { logoutUser } from "@/app/actions";
 import { LogOut, Shield, User2, Zap } from "lucide-react";
 import Image from "next/image";
 import { ThemeToggle } from "./theme-toggle";
 
 export function Navbar() {
   const { user, role } = useAuth();
-  const router = useRouter();
 
   const handleLogout = async () => {
-    // TODO: Implement logout via server action (e.g., clear JWT cookie)
-    router.push("/");
+    await logoutUser();
+    window.location.href = "/";
   };
 
   if (!user) return null;
@@ -44,10 +43,10 @@ export function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-semibold text-foreground/90 leading-none">
-                                ((user as any)?.email?.split('@')[0] ?? '')
+                {user?.email?.split('@')[0] ?? ''}
               </span>
               <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${role === 'admin' ? 'text-primary' : 'text-muted-foreground'}`}>
-                {role === 'admin' ? 'Command Level' : 'Employee'}
+                {role === 'admin' ? 'Administrateur' : 'Utilisateur'}
               </span>
             </div>
           </div>
