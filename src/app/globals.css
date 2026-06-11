@@ -294,10 +294,10 @@
   .mesh-bg {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: 1;
     overflow: hidden;
     pointer-events: none;
-    background-color: var(--background);
+    background-color: transparent;
   }
   
   .mesh-bg-gradient {
@@ -324,6 +324,47 @@
     mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
     -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
     opacity: 0.5;
+  }
+
+  .page-wallpaper {
+    position: relative;
+    background-color: var(--background);
+  }
+
+  .page-wallpaper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: 
+      url("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop"), 
+      url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop"),
+      url("https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?q=80&w=1920&auto=format&fit=crop");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: -1;
+    mix-blend-mode: overlay;
+    transition: opacity 0.5s ease;
+  }
+
+  .dark .page-wallpaper::before {
+    opacity: 0.06;
+  }
+
+
+  .noise-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle at 20% 10%, rgba(255,255,255,0.04), transparent 20%),
+                      radial-gradient(circle at 80% 90%, rgba(255,255,255,0.03), transparent 25%),
+                      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+    opacity: 0.95;
+    mix-blend-mode: overlay;
+    z-index: 0;
   }
 
   /* ============================================================

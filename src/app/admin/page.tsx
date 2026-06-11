@@ -8,24 +8,24 @@ import { getAllTickets, updateTicketStatus } from "@/app/actions";
 import { CommandMenu } from "@/components/command-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { AuroraBackground } from "@/components/AuroraBackground";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ShieldCheck, Search, Activity, Clock, CheckCircle2, AlertCircle, MoreVertical, LayoutGrid, Terminal } from "lucide-react";
+import { ShieldCheck, Search, Activity, Clock, CheckCircle2, AlertCircle, MoreVertical, LayoutGrid, Terminal, Monitor, Wifi, Lock, Cpu, Server, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
-};
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+} as const;
 
 const springCard = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
-};
+  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } },
+} as const;
 
 export default function AdminDashboard() {
   const { user, role, loading: authLoading } = useAuth();
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { 
     setMounted(true);
-    const interval = setInterval(() => setCurrentTime(Date.now()), 60000); // Update every minute for SLA
+    const interval = setInterval(() => setCurrentTime(Date.now()), 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
       const res = await updateTicketStatus(id, newStatus, actorEmail);
       if (res.success && res.ticket) {
         toast.success("Mise à jour synchronisée", { description: "Le nœud réseau a bien été actualisé." });
-        loadTickets(); // Refresh to get the latest audit logs
+        loadTickets();
       } else throw new Error();
     } catch {
       toast.error("Erreur de synchronisation", { description: "La requête a été rejetée." });
@@ -105,7 +105,8 @@ export default function AdminDashboard() {
     const resolved = tickets.filter(t => t.status === "resolved").length;
     const open = tickets.filter(t => t.status === "open").length;
     const urgent = tickets.filter(t => t.status === "open" && t.priority === "high").length;
-    return { total, resolved, open, urgent };
+    const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    return { total, resolved, open, urgent, resolutionRate };
   }, [tickets]);
 
   const chartData = useMemo(() => {
@@ -126,9 +127,8 @@ export default function AdminDashboard() {
     return Object.entries(groups).map(([name, data]) => ({ name, ...data }));
   }, [tickets]);
 
-  // Extract all audit logs for the terminal
   const allLogs = useMemo(() => {
-    return tickets.flatMap(t => t.auditLogs || []).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50);
+    return tickets.flatMap(t => t.auditLogs || []).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50);
   }, [tickets]);
 
   const getSLA = (ticket: any) => {
@@ -137,24 +137,34 @@ export default function AdminDashboard() {
     if (ticket.priority === 'high') {
       const submitted = new Date(ticket.submittedAt).getTime();
       const elapsed = currentTime - submitted;
-      const limit = 2 * 60 * 60 * 1000; // 2 hours SLA
+      const limit = 2 * 60 * 60 * 1000;
       const remaining = limit - elapsed;
       if (remaining <= 0) return { text: "SLA DÉPASSÉ", urgent: true };
-      
       const hours = Math.floor(remaining / (1000 * 60 * 60));
       const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-      return { 
-        text: `${hours}h ${mins}m restants`, 
-        urgent: remaining < 15 * 60 * 1000 // < 15 mins
-      };
+      return { text: `${hours}h ${mins}m restants`, urgent: remaining < 15 * 60 * 1000 };
     }
     return null;
   };
 
-  if (!mounted || authLoading || (user && role !== "admin")) return <div className="min-h-screen bg-zinc-950" />;
+  if (!mounted || authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // router.push("/") already called in useEffect
+  }
+
+  if (role !== "admin") {
+    return null; // router.push("/my-tickets") already called in useEffect
+  }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden text-foreground selection:bg-blue-500/30">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden text-foreground selection:bg-blue-500/30 page-wallpaper">
       <div className="mesh-bg">
         <div className="mesh-bg-gradient opacity-60 dark:opacity-100" />
         <div className="bg-grid-modern opacity-40 dark:opacity-60" />
@@ -194,20 +204,24 @@ export default function AdminDashboard() {
               {/* KPIs Bento */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {[
-                  { title: "Volume Global", icon: Activity, val: stats.total, color: "text-blue-400" },
-                  { title: "Flux Actifs", icon: AlertCircle, val: stats.open, color: "text-orange-400" },
-                  { title: "Anomalies Critiques", icon: Clock, val: stats.urgent, color: "text-red-500" },
-                  { title: "Nœuds Résolus", icon: CheckCircle2, val: stats.resolved, color: "text-green-400" }
+                  { title: "Volume Global", icon: Activity, val: stats.total, color: "text-blue-400", glow: "border-blue-500/20 hover:border-blue-500/40 shadow-blue-950/20", desc: "Incidents totaux enregistrés" },
+                  { title: "Flux Actifs", icon: AlertCircle, val: stats.open, color: "text-orange-400", glow: "border-orange-500/20 hover:border-orange-500/40 shadow-orange-950/20", desc: "Nécessite une intervention" },
+                  { title: "Anomalies Critiques", icon: Clock, val: stats.urgent, color: "text-red-500", glow: "border-red-500/25 hover:border-red-500/50 shadow-red-950/35", desc: "Hors SLA ou Priorité Haute" },
+                  { title: "Résolution Globale", icon: CheckCircle2, val: `${stats.resolutionRate}%`, color: "text-green-400", glow: "border-green-500/20 hover:border-green-500/40 shadow-green-950/20", desc: `${stats.resolved} incidents résolus` }
                 ].map((stat, i) => (
                   <motion.div key={i} variants={springCard}>
-                    <Card className="bento-card rounded-[2rem] overflow-hidden">
-                      <CardHeader className="pb-2 pt-6">
-                        <CardTitle className={`text-[11px] font-bold ${stat.color} uppercase tracking-widest flex items-center gap-2`}>
-                          <stat.icon className="h-4 w-4" /> {stat.title}
+                    <Card className={`bento-card border rounded-2xl overflow-hidden bg-card/40 backdrop-blur-xl transition-all duration-300 ${stat.glow} shadow-xl hover:-translate-y-1`}>
+                      <CardHeader className="pb-1 pt-5 px-5">
+                        <CardTitle className={`text-xs font-bold ${stat.color} uppercase tracking-widest flex items-center justify-between`}>
+                          <span className="flex items-center gap-2">
+                            <stat.icon className="h-4 w-4" />
+                            {stat.title}
+                          </span>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="pb-6">
-                        <div className="text-5xl font-black text-foreground tracking-tighter drop-shadow-lg">{stat.val}</div>
+                      <CardContent className="pb-5 px-5">
+                        <div className="text-4xl font-extrabold text-foreground tracking-tight mb-1">{stat.val}</div>
+                        <p className="text-xs text-muted-foreground font-medium">{stat.desc}</p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -215,7 +229,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Graphique Bento */}
+                {/* Chart */}
                 <motion.div variants={springCard} className="lg:col-span-2">
                   <Card className="bento-card h-full flex flex-col rounded-[2rem] overflow-hidden">
                     <CardHeader className="border-b border-border/50 pb-5">
@@ -246,7 +260,7 @@ export default function AdminDashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Audit Trail Terminal Bento */}
+                {/* Audit Trail */}
                 <motion.div variants={springCard}>
                   <Card className="bento-card h-full flex flex-col rounded-[2rem] overflow-hidden">
                     <CardHeader className="border-b border-border/50 pb-4 bg-muted/30">
@@ -259,7 +273,7 @@ export default function AdminDashboard() {
                         {allLogs.length === 0 ? (
                           <div className="text-xs text-muted-foreground font-mono">Aucun log système disponible.</div>
                         ) : (
-                          allLogs.map((log, i) => (
+                          allLogs.map((log: any, i: number) => (
                             <div key={i} className="font-mono text-[10px] sm:text-xs">
                               <span className="text-muted-foreground/60">[{new Date(log.timestamp).toLocaleTimeString()}]</span>{" "}
                               <span className="text-blue-500 dark:text-blue-400 font-bold">{log.action}</span>{" "}
@@ -275,11 +289,9 @@ export default function AdminDashboard() {
                 </motion.div>
               </div>
 
-              {/* Filtres & Tableau */}
+              {/* Filters & Table */}
               <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both" style={{ animationDelay: '200ms' }}>
                 <Card className="bento-card rounded-[2rem] overflow-hidden">
-                  
-                  {/* Filters Bar */}
                   <div className="p-6 border-b border-border/50 flex flex-col md:flex-row gap-4 bg-muted/20">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -324,7 +336,7 @@ export default function AdminDashboard() {
                       <table className="w-full text-sm text-left">
                         <thead className="bg-muted/30 border-b border-border/50 text-muted-foreground uppercase text-[10px] font-bold tracking-widest">
                           <tr>
-                            <th className="px-6 py-5">Entité & Signature</th>
+                            <th className="px-6 py-5">Entité &amp; Signature</th>
                             <th className="px-6 py-5">Catégorie</th>
                             <th className="px-6 py-5">SLA / Criticité</th>
                             <th className="px-6 py-5">État</th>
@@ -360,19 +372,36 @@ export default function AdminDashboard() {
                                   </td>
 
                                   <td className="px-6 py-5">
-                                    <Badge variant="outline" className="border-border text-muted-foreground bg-muted/50 uppercase text-[9px] tracking-widest">
-                                      {ticket.category || "other"}
-                                    </Badge>
+                                    <span className="flex items-center gap-1.5 w-fit bg-muted/40 border border-border/50 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-foreground/75 font-mono">
+                                      {ticket.category === 'hardware' && <Monitor className="h-3.5 w-3.5 text-blue-400" />}
+                                      {ticket.category === 'network' && <Wifi className="h-3.5 w-3.5 text-purple-400" />}
+                                      {ticket.category === 'auth' && <Lock className="h-3.5 w-3.5 text-orange-400" />}
+                                      {ticket.category === 'software' && <Cpu className="h-3.5 w-3.5 text-pink-400" />}
+                                      {ticket.category === 'other' && <Server className="h-3.5 w-3.5 text-muted-foreground" />}
+                                      {ticket.category || 'autre'}
+                                    </span>
                                   </td>
                                   
                                   <td className="px-6 py-5">
-                                    <div className="flex flex-col gap-1.5 items-start">
-                                      {ticket.priority === 'high' && <Badge className="bg-orange-500/10 text-orange-400 border-none px-2 h-5 text-[9px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(249,115,22,0.15)]">Urgent</Badge>}
-                                      {ticket.priority === 'medium' && <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-none shadow-[0_0_10px_rgba(59,130,246,0.15)]">Alerte</Badge>}
-                                      {ticket.priority === 'low' && <Badge variant="outline" className="border-border text-muted-foreground bg-transparent">Normale</Badge>}
+                                    <div className="flex flex-col gap-1 items-start">
+                                      {ticket.priority === 'high' && (
+                                        <Badge className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/25 border border-orange-500/20 px-2 h-5 text-[9px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(249,115,22,0.15)]">
+                                          <AlertTriangle className="h-2.5 w-2.5 mr-1" /> Urgent
+                                        </Badge>
+                                      )}
+                                      {ticket.priority === 'medium' && (
+                                        <Badge className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/25 border border-blue-500/20 px-2 h-5 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_10px_rgba(59,130,246,0.15)]">
+                                          <AlertCircle className="h-2.5 w-2.5 mr-1" /> Alerte
+                                        </Badge>
+                                      )}
+                                      {ticket.priority === 'low' && (
+                                        <Badge className="bg-muted text-muted-foreground hover:bg-muted/80 border border-border/50 px-2 h-5 text-[9px] font-medium uppercase tracking-widest">
+                                          Standard
+                                        </Badge>
+                                      )}
                                       
                                       {sla && (
-                                        <span className={`text-[10px] font-mono font-bold ${isUrgentSLA ? 'text-red-400 animate-pulse' : 'text-muted-foreground'}`}>
+                                        <span className={`text-[10px] font-mono font-bold mt-1 ${isUrgentSLA ? 'text-red-400 animate-pulse' : 'text-muted-foreground'}`}>
                                           {sla.text}
                                         </span>
                                       )}
@@ -381,24 +410,19 @@ export default function AdminDashboard() {
 
                                   <td className="px-6 py-5">
                                     {ticket.status === 'open' ? (
-                                      <div className="flex items-center gap-2">
-                                        <span className="relative flex h-2 w-2">
-                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                                          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                                        </span>
-                                        <span className="text-[11px] font-bold text-blue-400 uppercase tracking-widest">Actif</span>
-                                      </div>
+                                      <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> Actif
+                                      </span>
                                     ) : (
-                                      <div className="flex items-center gap-2">
-                                        <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
-                                        <span className="text-[11px] font-bold text-green-400 uppercase tracking-widest">Résolu</span>
-                                      </div>
+                                      <span className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Résolu
+                                      </span>
                                     )}
                                   </td>
 
                                   <td className="px-6 py-5">
-                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
-                                      <Clock className="h-3 w-3" />
+                                    <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 font-mono">
+                                      <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
                                       {new Date(ticket.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </td>
@@ -414,7 +438,7 @@ export default function AdminDashboard() {
                                             className="text-green-500 focus:bg-green-500/10 rounded-lg cursor-pointer text-xs font-bold py-2.5 mb-1"
                                             onClick={() => handleStatusChange(ticket.id, 'resolved')}
                                           >
-                                            <CheckCircle2 className="mr-2 h-4 w-4" /> Purger l'anomalie
+                                            <CheckCircle2 className="mr-2 h-4 w-4" /> Purger l&apos;anomalie
                                           </DropdownMenuItem>
                                         ) : (
                                           <DropdownMenuItem 

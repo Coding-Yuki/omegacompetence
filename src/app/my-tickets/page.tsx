@@ -12,17 +12,28 @@ import { AuroraBackground } from "@/components/AuroraBackground";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, CheckCircle2, Zap, Clock, ShieldCheck } from "lucide-react";
+import { PlusCircle, CheckCircle2, Zap, Clock, ShieldCheck, Monitor, Wifi, Lock, Cpu, Server, AlertTriangle, AlertCircle } from "lucide-react";
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
-};
+function formatTimeElapsed(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const elapsedMs = now.getTime() - date.getTime();
+  
+  const mins = Math.floor(elapsedMs / (60 * 1000));
+  if (mins < 1) return "À l'instant";
+  if (mins < 60) return `Il y a ${mins} min`;
+  
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Il y a ${hours}h`;
+  
+  const days = Math.floor(hours / 24);
+  return `Il y a ${days}j`;
+}
 
-const springCard = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
-};
+
+const staggerContainer = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } } } as const;
+
+const springCard = { hidden: { opacity: 0, y: 30, scale: 0.95 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } } } as const;
 
 export default function EmployeeDashboard() {
   const { user, role, loading } = useAuth();
@@ -38,9 +49,9 @@ export default function EmployeeDashboard() {
   useEffect(() => { setMounted(true); }, []);
 
   const loadTickets = useCallback(async () => {
-    if (user?.email) {
+    if ((user as any)?.email) {
       setFetching(true);
-      const res = await getTickets(user.email);
+      const res = await getTickets((user as any).email);
       if (res.success) setTickets(res.tickets);
       setFetching(false);
     }
@@ -48,10 +59,15 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     if (!loading) {
-      if (!user) router.push("/");
-      else loadTickets();
+      if (!user) {
+        router.push("/");
+      } else if (role === "admin") {
+        router.push("/admin");
+      } else {
+        loadTickets();
+      }
     }
-  }, [user, loading, router, loadTickets]);
+  }, [user, role, loading, router, loadTickets]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if (!mainRef.current) return;
@@ -70,10 +86,17 @@ export default function EmployeeDashboard() {
     loadTickets();
   };
 
-  if (!mounted || loading || !user) return <div className="min-h-screen bg-background" />;
+  if (!mounted || loading || !user || role !== "employee") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden text-foreground selection:bg-blue-500/30">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden text-foreground selection:bg-blue-500/30 page-wallpaper">
       <div className="mesh-bg">
         <div className="mesh-bg-gradient opacity-60 dark:opacity-100" />
         <div className="bg-grid-modern opacity-40 dark:opacity-60" />
@@ -90,10 +113,10 @@ export default function EmployeeDashboard() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 backdrop-blur-md mb-4 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
                 <Zap className="h-3.5 w-3.5 text-blue-400" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300">Espace Opérationnel</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-blue-300">Portail Support</span>
               </div>
-              <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">Centre de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Support</span></h1>
-              <p className="text-muted-foreground text-sm">Signalez une anomalie via notre IA prédictive.</p>
+              <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">Tableau de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">bord</span></h1>
+              <p className="text-muted-foreground text-sm">Visualisez vos incidents et suivez les actions IA en temps réel.</p>
             </div>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -114,7 +137,7 @@ export default function EmployeeDashboard() {
                     </DialogDescription>
                   </DialogHeader>
 
-                  <SmartTicketForm userEmail={user.email as string} onSuccess={handleSuccess} />
+                  <SmartTicketForm userEmail={(user as any).email as string} onSuccess={handleSuccess} />
                   
                 </div>
               </DialogContent>
@@ -145,54 +168,100 @@ export default function EmployeeDashboard() {
           ) : (
             <motion.div variants={staggerContainer} className="grid gap-5">
               <AnimatePresence>
-                {tickets.map((ticket) => (
-                  <motion.div key={ticket.id} variants={springCard} layout>
-                    <div className={`bento-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 group rounded-[2rem] relative overflow-hidden ${ticket.seminarUrgency ? 'bg-red-500/5 dark:bg-red-950/20 border-red-500/30' : ''}`}>
-                      {ticket.seminarUrgency && ticket.status === 'open' && (
-                        <div className="absolute top-0 left-0 w-1 h-full bg-red-500 shadow-[0_0_20px_rgba(239,68,68,1)]" />
-                      )}
-                      <div className="flex-1 min-w-0 pr-4 z-10">
-                        <div className="flex items-center gap-3 mb-2.5">
-                          {ticket.status === 'open' ? (
-                            <div className="flex items-center gap-2">
-                               <span className="relative flex h-2.5 w-2.5">
-                                 <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${ticket.seminarUrgency ? 'bg-red-400' : 'bg-blue-400'}`} />
-                                 <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${ticket.seminarUrgency ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,1)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]'}`} />
-                               </span>
-                            </div>
-                          ) : (
-                            <div className="h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
-                          )}
-                          <h3 className="font-bold text-lg text-foreground truncate">{ticket.title}</h3>
-                          {ticket.priority === 'high' && <Badge className="bg-orange-500/20 text-orange-400 border-none px-2 h-5 text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(249,115,22,0.2)]">Urgent</Badge>}
-                          {ticket.seminarUrgency && <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 h-5 text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse">Séminaire</Badge>}
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed max-w-2xl">
-                          {ticket.description}
-                        </p>
-                      </div>
-                      
-                      <div className="flex flex-row md:flex-col items-center md:items-end justify-between shrink-0 gap-3 border-t border-border/50 md:border-t-0 pt-4 md:pt-0 z-10">
-                        {ticket.status === 'open' ? (
-                          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${ticket.seminarUrgency ? 'bg-red-950/50 border-red-500/30 text-red-400' : 'bg-blue-950/30 border-blue-500/20 text-blue-400'}`}>
-                            <span className="text-[10px] font-bold uppercase tracking-widest">{ticket.seminarUrgency ? 'Critique' : 'En traitement IA'}</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 bg-green-950/30 px-3 py-1.5 rounded-full border border-green-500/20 text-green-400">
-                            <CheckCircle2 className="h-3 w-3" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Résolu</span>
-                          </div>
+                {tickets.map((ticket) => {
+                  const timeElapsed = formatTimeElapsed(ticket.submittedAt);
+                  const isHigh = ticket.priority === 'high';
+                  const isMedium = ticket.priority === 'medium';
+                  const isLow = ticket.priority === 'low';
+                  
+                  return (
+                    <motion.div key={ticket.id} variants={springCard} layout>
+                      <div className={`bento-card p-5 flex flex-col gap-4 group rounded-2xl border transition-all relative overflow-hidden ${
+                        ticket.seminarUrgency && ticket.status === 'open' 
+                          ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/30' 
+                          : 'bg-card/30 border-border/50 hover:border-primary/30'
+                      }`}>
+                        {ticket.seminarUrgency && ticket.status === 'open' && (
+                          <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
                         )}
-                        <span className="text-[11px] text-muted-foreground font-mono flex items-center gap-1.5">
-                          <Clock className="h-3 w-3" />
-                          {new Date(ticket.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' })}
-                        </span>
+                        
+                        {/* Header: ID, Submitter & Category */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/30 pb-2.5 text-xs">
+                          <div className="flex items-center gap-2 font-mono text-muted-foreground">
+                            <span className="bg-muted px-2 py-0.5 rounded text-[10px] font-bold text-foreground/80">#{ticket.id.substring(0, 8)}</span>
+                            <span>•</span>
+                            <span className="truncate max-w-[150px] sm:max-w-[250px]">{ticket.submittedBy}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground font-mono text-[11px]">{timeElapsed}</span>
+                            <span className="text-muted-foreground/30">|</span>
+                            <span className="flex items-center gap-1 bg-muted/50 border border-border/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-foreground/70">
+                              {ticket.category === 'hardware' && <Monitor className="h-3 w-3 text-blue-400" />}
+                              {ticket.category === 'network' && <Wifi className="h-3 w-3 text-purple-400" />}
+                              {ticket.category === 'auth' && <Lock className="h-3 w-3 text-orange-400" />}
+                              {ticket.category === 'software' && <Cpu className="h-3 w-3 text-pink-400" />}
+                              {ticket.category === 'other' && <Server className="h-3 w-3 text-muted-foreground" />}
+                              {ticket.category || 'autre'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Title & Desc */}
+                        <div className="space-y-1.5">
+                          <h3 className="font-bold text-base md:text-lg text-foreground leading-snug group-hover:text-primary transition-colors">
+                            {ticket.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                            {ticket.description}
+                          </p>
+                        </div>
+
+                        {/* Footer: Priority & Status */}
+                        <div className="flex items-center justify-between pt-2.5 border-t border-border/30 text-xs">
+                          <div className="flex items-center gap-2">
+                            {isHigh && (
+                              <span className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                <AlertTriangle className="h-3 w-3" /> Urgent
+                              </span>
+                            )}
+                            {isMedium && (
+                              <span className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                <AlertCircle className="h-3 w-3" /> Alerte
+                              </span>
+                            )}
+                            {isLow && (
+                              <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground border border-border/50 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider">
+                                Standard
+                              </span>
+                            )}
+
+                            {ticket.seminarUrgency && (
+                              <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.15)]">
+                                Séminaire
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {ticket.status === 'open' ? (
+                              <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                <span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> En traitement
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Résolu
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </motion.div>
+
           )}
         </motion.div>
       </main>

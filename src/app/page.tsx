@@ -4,11 +4,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { loginUser, logoutUser, getUserRole } from "@/app/actions";
 import { authSchema, AuthInput } from "@/lib/validations";
 import { useAuth } from "@/hooks/useAuth";
-import { getUserRole } from "@/app/actions";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -114,11 +112,23 @@ export default function AuthPage() {
     setIsLoading(true);
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
-      // Success: let useAuth handle redirect via useEffect
+      const res = await loginUser(data.email, data.password);
+      if (res.success) {
+        // Redirect based on role after cookie is set
+        if (res.role === "admin") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/my-tickets";
+        }
+        return;
+      } else {
+        toast.error("Erreur système", { description: res.error });
+      }
+      setIsLoading(false);
+      reset({ email: data.email, password: "" });
+      return;
     } catch (err: any) {
-      if (err.code === "auth/invalid-credential") setError("Identifiants non reconnus.");
-      else setError("Anomalie système détectée.");
+      setError("Anomalie système détectée.");
       setIsLoading(false);
       reset({ email: data.email, password: "" }); // Clear password on error, keep email
     }
@@ -135,7 +145,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12" suppressHydrationWarning>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background page-wallpaper px-4 py-12" suppressHydrationWarning>
       {/* ━━━━━━━━━━ BACKGROUND VIVANT ━━━━━━━━━━ */}
       <div className="mesh-bg">
         <div className="mesh-bg-gradient opacity-60 dark:opacity-100" />

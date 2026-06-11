@@ -4,10 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { registerUser, loginUser, logoutUser } from "@/app/actions";
 import { registerSchema, RegisterInput } from "@/lib/validations";
-import { assignUserRole } from "@/app/actions";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -44,7 +42,7 @@ export default function RegisterPage() {
     }
   }, [user, role, loading, router]);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterInput>({
+  const { register, handleSubmit, watch, formState: { errors }, setError, reset } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: { fullName: "", email: "", password: "", confirmPassword: "", adminCode: "" },
   });
@@ -98,20 +96,24 @@ export default function RegisterPage() {
     try {
       // Validate admin code BEFORE creating account
       const ADMIN_SECRET_CODE = "OMEGA-COMPETENCE-2026";
-      if (data.adminCode && data.adminCode !== ADMIN_SECRET_CODE) {
+      const trimmedCode = data.adminCode?.trim();
+      if (trimmedCode && trimmedCode !== ADMIN_SECRET_CODE) {
         toast.error("Code invalide", { description: "Le code d'accès administrateur est incorrect." });
         setIsLoading(false);
         return;
       }
 
-      const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      const res = await assignUserRole(cred.user.uid, data.email, data.adminCode);
-      
+      // Use trimmed code for role assignment
+      const res = await registerUser(data.email, data.password, trimmedCode);
       if (res.success) {
         toast.success("Profil synchronisé", { description: "Connexion au Neural Core établie." });
-        // Let the useEffect handle redirect once auth state settles
+        if (res.user?.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/my-tickets");
+        }
       } else {
-        toast.error("Erreur de rôle", { description: res.error });
+        toast.error("Erreur d'inscription", { description: res.error });
         setIsLoading(false);
       }
     } catch (err: any) {
@@ -121,7 +123,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen bg-background overflow-hidden text-foreground font-sans selection:bg-blue-500/30">
+    <div className="relative flex min-h-screen bg-background overflow-hidden text-foreground font-sans selection:bg-blue-500/30 page-wallpaper">
       <div className="mesh-bg">
         <div className="mesh-bg-gradient opacity-60 dark:opacity-100" />
         <div className="bg-grid-modern opacity-40 dark:opacity-60" />

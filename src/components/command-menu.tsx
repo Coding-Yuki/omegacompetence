@@ -3,8 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Search, PlusCircle, LayoutDashboard, LogOut } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
+import { logoutUser } from "@/app/actions";
 
 import {
   CommandDialog,
@@ -70,8 +69,8 @@ export function CommandMenu() {
           <CommandSeparator />
           <CommandGroup heading="Paramètres">
             <CommandItem onSelect={() => runCommand(async () => {
-              await signOut(auth);
-              router.push("/");
+              await logoutUser();
+               router.push("/");
             })}>
               <LogOut className="mr-2 h-4 w-4" />
               Se déconnecter
