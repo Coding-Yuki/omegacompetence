@@ -179,7 +179,6 @@ export default function AuthPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="nom@entreprise.com"
                   {...register("email")}
                   className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4"
                 />
@@ -192,7 +191,6 @@ export default function AuthPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
                     {...register("password")}
                     className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4 pr-12"
                   />

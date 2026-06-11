@@ -206,9 +206,6 @@ export default function EmployeeDashboard() {
                             </div>
                             <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
                               <span className="inline-flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-full border border-border/50 uppercase tracking-wider">
-                                #{ticket.id.substring(0, 8)}
-                              </span>
-                              <span className="inline-flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-full border border-border/50 uppercase tracking-wider">
                                 {timeElapsed}
                               </span>
                             </div>

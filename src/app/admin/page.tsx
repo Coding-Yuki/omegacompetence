@@ -358,7 +358,7 @@ export default function AdminDashboard() {
                                   <td className="px-6 py-5 font-medium">
                                     <div className="flex flex-col gap-1">
                                       <span className="text-foreground truncate max-w-[280px] font-semibold text-sm">{ticket.title}</span>
-                                      <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{ticket.id.substring(0, 8)} • {ticket.submittedBy.split('@')[0]}</span>
+                                      <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">{ticket.submittedBy.split('@')[0]}</span>
                                     </div>
                                   </td>
 

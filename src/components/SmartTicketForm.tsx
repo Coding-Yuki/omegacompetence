@@ -166,21 +166,33 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
                   )}
                 </AnimatePresence>
               </Label>
-              <Select 
-                value={watch("category")} 
-                onValueChange={(val) => setValue("category", val ?? "other")}
-              >
-                <SelectTrigger className={`bg-background/40 text-foreground border-border rounded-xl h-11 text-sm transition-all duration-300 ${suggestedCategory ? 'border-green-500/50' : ''}`}>
-                  <SelectValue placeholder="Catégorie..." />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border text-popover-foreground rounded-xl shadow-2xl">
-                  <SelectItem value="hardware"><div className="flex items-center gap-2"><Monitor className="h-4 w-4 text-blue-400"/> Matériel</div></SelectItem>
-                  <SelectItem value="network"><div className="flex items-center gap-2"><Wifi className="h-4 w-4 text-purple-400"/> Réseau & VPN</div></SelectItem>
-                  <SelectItem value="auth"><div className="flex items-center gap-2"><Lock className="h-4 w-4 text-orange-400"/> Authentification</div></SelectItem>
-                  <SelectItem value="software"><div className="flex items-center gap-2"><Cpu className="h-4 w-4 text-pink-400"/> Logiciel / ERP</div></SelectItem>
-                  <SelectItem value="other"><div className="flex items-center gap-2"><Server className="h-4 w-4 text-muted-foreground"/> Autre</div></SelectItem>
-                </SelectContent>
-              </Select>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { value: "hardware", icon: Monitor, label: "Matériel", color: "text-blue-400" },
+                  { value: "network", icon: Wifi, label: "Réseau", color: "text-purple-400" },
+                  { value: "auth", icon: Lock, label: "Accès / Auth", color: "text-orange-400" },
+                  { value: "software", icon: Cpu, label: "Logiciel", color: "text-pink-400" },
+                  { value: "other", icon: Server, label: "Autre", color: "text-muted-foreground" }
+                ].map(({ value, icon: Icon, label, color }) => {
+                  const isSelected = watch("category") === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setValue("category", value)}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 cursor-pointer hover:scale-105 ${
+                        isSelected
+                          ? "border-red-500 bg-red-500/10"
+                          : "border-border bg-background/40 hover:border-red-500/30"
+                      }`}
+                    >
+                      <Icon className={`h-6 w-6 ${color}`} />
+                      <span className="text-xs font-semibold text-foreground text-center">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -191,7 +203,6 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
         <div className="space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-wider text-primary">2. Diagnostic Technique</h4>
           <div className="space-y-2" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
-            <Label htmlFor="description" className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Description détaillée</Label>
             <Textarea 
               id="description" 
               placeholder="Décrivez l'anomalie en détail..." 
@@ -257,9 +268,6 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
                 <Label className="flex items-center gap-1.5 text-red-400 font-extrabold tracking-widest uppercase text-[9px]">
                   <AlertTriangle className="h-3.5 w-3.5" /> Urgence Séminaire
                 </Label>
-                <span className="text-[10px] text-muted-foreground mt-0.5 leading-none">
-                  Formation OMEGA en cours.
-                </span>
               </div>
               <Switch 
                 onCheckedChange={(checked) => setValue("seminarUrgency", checked)} 

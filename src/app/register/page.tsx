@@ -154,7 +154,6 @@ export default function RegisterPage() {
                 <div className="relative">
                   <UserIcon className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="John Doe"
                     {...register("fullName")}
                     className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4 pl-11"
                   />
@@ -167,7 +166,6 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
-                    placeholder="nom@omega.com"
                     {...register("email")}
                     className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4 pl-11"
                   />
@@ -180,7 +178,6 @@ export default function RegisterPage() {
                   <Label className="text-sm font-semibold text-slate-900">Mot de passe</Label>
                   <Input
                     type="password"
-                    placeholder="Mot de passe"
                     {...register("password")}
                     className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4"
                   />
@@ -190,7 +187,6 @@ export default function RegisterPage() {
                   <Label className="text-sm font-semibold text-slate-900">Confirmer le mot de passe</Label>
                   <Input
                     type="password"
-                    placeholder="Confirmez"
                     {...register("confirmPassword")}
                     className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4"
                   />
@@ -205,7 +201,6 @@ export default function RegisterPage() {
                 </div>
                 <Input
                   type="password"
-                  placeholder="••••••••••"
                   {...register("adminCode")}
                   className="h-12 w-full rounded-2xl bg-white text-gray-900 border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-500 placeholder:text-gray-400 px-4 font-mono text-sm"
                 />
