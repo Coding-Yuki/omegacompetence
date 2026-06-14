@@ -25,9 +25,9 @@ export default function RegisterPage() {
   const [showRipple, setShowRipple] = useState(false);
   const hasRedirectedRef = useRef(false);
 
-  // Redirect already authenticated users to their dashboard
+
   useEffect(() => {
-    // Guard: prevent multiple redirects
+
     if (hasRedirectedRef.current) return;
     
     if (!loading && user && role) {
@@ -49,7 +49,7 @@ export default function RegisterPage() {
   const watchPassword = watch("password");
   const watchConfirm = watch("confirmPassword");
 
-  // Magnetic 3D effect for the card
+
   const cardRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -73,7 +73,7 @@ export default function RegisterPage() {
     y.set(0);
   };
 
-  // Password evaluation
+
   useEffect(() => {
     let score = 0;
     if (watchPassword.length >= 8) score += 1;
@@ -92,7 +92,6 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterInput) {
     setIsLoading(true);
     try {
-      // Validate admin code BEFORE creating account
       const ADMIN_SECRET_CODE = "OMEGA-COMPETENCE-2026";
       const trimmedCode = data.adminCode?.trim();
       if (trimmedCode && trimmedCode !== ADMIN_SECRET_CODE) {
@@ -101,7 +100,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Use trimmed code for role assignment
       const res = await registerUser(data.email, data.password, trimmedCode);
       if (!res.success) {
         toast.error("Erreur d'inscription", { description: res.error });
@@ -109,7 +107,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Auto login after successful registration
       const loginResult = await loginUser(data.email, data.password);
       if (!loginResult.success) {
         toast.error("Inscription réussie mais connexion échouée", { description: "Veuillez vous connecter manuellement." });
@@ -120,7 +117,6 @@ export default function RegisterPage() {
 
       toast.success("Profil créé", { description: "Connexion établie." });
 
-      // Hard redirect based on role
       if (loginResult.role === "admin") {
         window.location.href = "/admin";
       } else {

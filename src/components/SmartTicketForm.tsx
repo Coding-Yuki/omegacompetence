@@ -65,7 +65,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
 
   const description = watch("description");
 
-  // Auto-catégorisation et suggestions
+
   useEffect(() => {
     if (!description) {
       setSuggestedCategory(null);
@@ -75,7 +75,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
 
     const lowerDesc = description.toLowerCase();
     
-    // Auto-category
+
     let foundCategory = null;
     for (const [cat, words] of Object.entries(KEYWORDS)) {
       if (words.some(w => lowerDesc.includes(w))) {
@@ -91,7 +91,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
       setSuggestedCategory(null);
     }
 
-    // Ticket deflection
+
     let foundDeflection = null;
     for (const key of Object.keys(DEFLECTION_SOLUTIONS)) {
       if (lowerDesc.includes(key)) {
@@ -137,7 +137,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10 bg-card/30 border border-border/50 p-6 md:p-8 rounded-3xl">
         
-        {/* Section 1: Informations Générales */}
+
         <div className="space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-wider text-primary">1. Informations Générales</h4>
           <div className="grid md:grid-cols-2 gap-4">
@@ -199,7 +199,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
 
         <hr className="border-border/30" />
 
-        {/* Section 2: Diagnostic Technique */}
+
         <div className="space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-wider text-primary">2. Diagnostic Technique</h4>
           <div className="space-y-2" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
@@ -212,7 +212,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
             {errors.description && <p className="text-[10px] text-red-500 font-medium">{errors.description.message}</p>}
           </div>
 
-          {/* Ticket Deflection Card */}
+
           <AnimatePresence>
             {deflectionKey && (
               <motion.div 
@@ -243,7 +243,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
 
         <hr className="border-border/30" />
 
-        {/* Section 3: Impact & Urgence */}
+
         <div className="space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-wider text-primary">3. Impact & Urgence</h4>
           
@@ -262,7 +262,7 @@ export function SmartTicketForm({ userEmail, onSuccess }: { userEmail: string, o
               </Select>
             </div>
 
-            {/* Toggle Séminaire (Premium Priority) */}
+
             <div className="flex items-center justify-between p-3 rounded-xl bg-red-950/10 border border-red-500/10 group hover:border-red-500/20 transition-colors h-16 mt-6 md:mt-0">
               <div className="flex flex-col pr-2">
                 <Label className="flex items-center gap-1.5 text-red-400 font-extrabold tracking-widest uppercase text-[9px]">

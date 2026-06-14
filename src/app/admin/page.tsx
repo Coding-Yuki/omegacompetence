@@ -4,12 +4,14 @@ import { useEffect, useState, useMemo, startTransition, useRef, useCallback } fr
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
-import { getAllTickets, updateTicketStatus } from "@/app/actions";
+import { getAllTickets, updateTicketStatus, assignTicket } from "@/app/actions";
 import { CommandMenu } from "@/components/command-menu";
+import { TicketDetailPanel } from "@/components/TicketDetailPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -37,6 +39,8 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const mainRef = useRef<HTMLElement>(null);
   const [currentTime, setCurrentTime] = useState(Date.now());
@@ -100,6 +104,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAssign = async (ticketId: string) => {
+    const adminEmail = user?.email;
+    if (!adminEmail) return;
+    startTransition(() => {
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, assignedTo: adminEmail } : t));
+    });
+    try {
+      const res = await assignTicket(ticketId, adminEmail);
+      if (res.success && res.ticket) {
+        toast.success("Ticket pris en charge");
+        loadTickets();
+      } else throw new Error();
+    } catch {
+      toast.error("Erreur d'assignation");
+      loadTickets();
+    }
+  };
+
   const stats = useMemo(() => {
     const total = tickets.length;
     const resolved = tickets.filter(t => t.status === "resolved").length;
@@ -156,11 +178,11 @@ export default function AdminDashboard() {
   }
 
   if (!user) {
-    return null; // router.push("/") already called in useEffect
+    return null;
   }
 
   if (role !== "admin") {
-    return null; // router.push("/my-tickets") already called in useEffect
+    return null;
   }
 
   return (
@@ -192,7 +214,7 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <>
-              {/* KPIs Bento */}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {[
                   { title: "Volume Global", icon: Activity, val: stats.total, color: "text-blue-400", glow: "border-blue-500/20 hover:border-blue-500/40 shadow-blue-950/20", desc: "Incidents totaux enregistrés" },
@@ -220,7 +242,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Chart */}
+
                 <motion.div variants={springCard} className="lg:col-span-2">
                   <Card className="bento-card h-full flex flex-col rounded-[2rem] overflow-hidden">
                     <CardHeader className="border-b border-border/50 pb-5">
@@ -251,7 +273,7 @@ export default function AdminDashboard() {
                   </Card>
                 </motion.div>
 
-                {/* Audit Trail */}
+
                 <motion.div variants={springCard}>
                   <Card className="bento-card h-full flex flex-col rounded-[2rem] overflow-hidden">
                     <CardHeader className="border-b border-border/50 pb-4 bg-muted/30">
@@ -269,8 +291,7 @@ export default function AdminDashboard() {
                               <span className="text-muted-foreground/60">[{new Date(log.timestamp).toLocaleTimeString()}]</span>{" "}
                               <span className="text-blue-500 dark:text-blue-400 font-bold">{log.action}</span>{" "}
                               <span className="text-muted-foreground/80">by</span>{" "}
-                              <span className="text-amber-600 dark:text-orange-300">{log.actorEmail.split('@')[0]}</span>{" "}
-                              <span className="text-muted-foreground/50">({log.ticketId.substring(0, 8)})</span>
+                              <span className="text-amber-600 dark:text-orange-300">{log.actorEmail.split('@')[0]}</span>
                             </div>
                           ))
                         )}
@@ -280,7 +301,7 @@ export default function AdminDashboard() {
                 </motion.div>
               </div>
 
-              {/* Filters & Table */}
+
               <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both" style={{ animationDelay: '200ms' }}>
                 <Card className="bento-card rounded-[2rem] overflow-hidden">
                   <div className="p-6 border-b border-border/50 flex flex-col md:flex-row gap-4 bg-muted/20">
@@ -331,6 +352,7 @@ export default function AdminDashboard() {
                             <th className="px-6 py-5">Catégorie</th>
                             <th className="px-6 py-5">Délai / Priorité</th>
                             <th className="px-6 py-5">État</th>
+                            <th className="px-6 py-5">Assignation</th>
                             <th className="px-6 py-5">Date et heure</th>
                             <th className="px-6 py-5 text-right">Actions</th>
                           </tr>
@@ -351,7 +373,8 @@ export default function AdminDashboard() {
                                   key={ticket.id}
                                   variants={springCard}
                                   exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                                  className={`group hover:bg-muted/40 transition-colors duration-300 relative ${isUrgentSLA ? 'bg-red-500/5 dark:bg-red-950/10' : ''}`}
+                                  onClick={() => { setSelectedTicket(ticket); setIsPanelOpen(true); }}
+                                  className={`group hover:bg-muted/40 transition-colors duration-300 relative cursor-pointer ${isUrgentSLA ? 'bg-red-500/5 dark:bg-red-950/10' : ''}`}
                                 >
                                   <td className={`absolute left-0 top-0 bottom-0 w-[2px] transition-opacity duration-300 ${isUrgentSLA ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] opacity-100' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]'}`} />
                                   
@@ -412,13 +435,39 @@ export default function AdminDashboard() {
                                   </td>
 
                                   <td className="px-6 py-5">
+                                    {ticket.assignedTo ? (
+                                      ticket.assignedTo === user?.email ? (
+                                        <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                          Vous
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1.5 bg-muted border border-border/50 px-2.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                                          pris en charge par {ticket.assignedTo.split('@')[0]}
+                                        </span>
+                                      )
+                                    ) : (
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAssign(ticket.id);
+                                        }}
+                                        size="xs"
+                                        variant="outline"
+                                        className="text-[10px] font-bold uppercase tracking-wider px-2 h-7 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 rounded-lg cursor-pointer"
+                                      >
+                                        Prendre en charge
+                                      </Button>
+                                    )}
+                                  </td>
+
+                                  <td className="px-6 py-5">
                                     <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 font-mono">
                                       <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
                                       {new Date(ticket.submittedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </td>
 
-                                  <td className="px-6 py-5 text-right">
+                                  <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-all duration-300 focus:opacity-100 inline-flex items-center justify-center cursor-pointer shadow-sm border border-transparent hover:border-border">
                                           <MoreVertical className="h-4 w-4" />
@@ -458,6 +507,12 @@ export default function AdminDashboard() {
       </main>
       
       <CommandMenu />
+      <TicketDetailPanel
+        ticket={selectedTicket}
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+        currentUserEmail={user?.email}
+      />
     </div>
   );
 }

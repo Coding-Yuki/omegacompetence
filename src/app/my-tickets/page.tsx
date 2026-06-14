@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { getTickets } from "@/app/actions";
 import { CommandMenu } from "@/components/command-menu";
+import { TicketDetailPanel } from "@/components/TicketDetailPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import { SmartTicketForm } from "@/components/SmartTicketForm";
 import { AuroraBackground } from "@/components/AuroraBackground";
@@ -43,6 +44,8 @@ export default function EmployeeDashboard() {
   const [fetching, setFetching] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const mainRef = useRef<HTMLElement>(null);
 
@@ -178,11 +181,14 @@ export default function EmployeeDashboard() {
                   
                   return (
                     <motion.div key={ticket.id} variants={springCard} layout>
-                      <div className={`bento-card p-5 flex flex-col gap-4 group rounded-3xl border transition-all relative overflow-hidden ${
-                        ticket.seminarUrgency && ticket.status === 'open' 
-                          ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/30' 
-                          : 'bg-card/30 border-border/50 hover:border-primary/30'
-                      }`}>
+                      <div
+                        onClick={() => { setSelectedTicket(ticket); setIsPanelOpen(true); }}
+                        className={`bento-card p-5 flex flex-col gap-4 group rounded-3xl border transition-all relative overflow-hidden cursor-pointer ${
+                          ticket.seminarUrgency && ticket.status === 'open' 
+                            ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/30' 
+                            : 'bg-card/30 border-border/50 hover:border-primary/30'
+                        }`}
+                      >
                         {ticket.seminarUrgency && ticket.status === 'open' && (
                           <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
                         )}
@@ -236,6 +242,15 @@ export default function EmployeeDashboard() {
                                   <ShieldCheck className="h-3 w-3" /> Faible
                                 </span>
                               )}
+                              {ticket.assignedTo ? (
+                                <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider">
+                                  Pris en charge par {ticket.assignedTo.split('@')[0]}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-muted/30 text-muted-foreground border border-border/30 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider">
+                                  En attente d'assignation
+                                </span>
+                              )}
                             </div>
 
                             {ticket.seminarUrgency && (
@@ -257,6 +272,11 @@ export default function EmployeeDashboard() {
       </main>
 
       <CommandMenu />
+      <TicketDetailPanel
+        ticket={selectedTicket}
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+      />
     </div>
   );
 }

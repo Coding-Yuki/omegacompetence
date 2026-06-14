@@ -28,7 +28,7 @@ export default function AuthPage() {
   const [mounted, setMounted] = useState(false);
   const hasRedirectedRef = useRef(false);
 
-  // Parallax / 3D Card Effect
+
   const cardRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -47,7 +47,7 @@ export default function AuthPage() {
     clearSession();
   }, []);
 
-  // Reset redirect guard when user logs out
+
   useEffect(() => {
     if (!user) {
       hasRedirectedRef.current = false;
@@ -56,7 +56,7 @@ export default function AuthPage() {
   }, [user]);
 
   useEffect(() => {
-    // Guard: prevent multiple redirects
+
     if (hasRedirectedRef.current) return;
     
     if (!loading && user && role) {
@@ -69,7 +69,7 @@ export default function AuthPage() {
     }
   }, [user, role, loading, router]);
 
-  // Safety timeout: if user is set but role is not fetched after 5 seconds, show error
+
   useEffect(() => {
     if (!user || role) return; // Skip if no user or role is already set
     
@@ -107,13 +107,12 @@ export default function AuthPage() {
   }, [x, y]);
 
   async function onSubmit(data: AuthInput) {
-    if (isLoading) return; // Prevent multiple submissions
+    if (isLoading) return;
     setIsLoading(true);
     setError("");
     try {
       const res = await loginUser(data.email, data.password);
-      if (res.success) {
-        // Redirect based on role after cookie is set
+        if (res.success) {
         if (res.role === "admin") {
           window.location.href = "/admin";
         } else {
@@ -129,7 +128,7 @@ export default function AuthPage() {
     } catch (err: any) {
       setError("Anomalie système détectée.");
       setIsLoading(false);
-      reset({ email: data.email, password: "" }); // Clear password on error, keep email
+      reset({ email: data.email, password: "" });
     }
   }
 

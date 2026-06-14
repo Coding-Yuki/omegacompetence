@@ -24,6 +24,7 @@ model Ticket {
   seminarUrgency Boolean     @default(false)
   status         String      @default("open")
   submittedBy    String
+  assignedTo     String?
   submittedAt    DateTime    @default(now())
   auditLogs      AuditLog[]
 }

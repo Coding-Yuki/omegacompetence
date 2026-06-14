@@ -146,6 +146,28 @@ export async function getAuditLogs(ticketId: string) {
   }
 }
 
+export async function assignTicket(ticketId: string, adminEmail: string) {
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    const ticket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: { assignedTo: adminEmail },
+    });
+    await prisma.auditLog.create({
+      data: {
+        ticketId: ticket.id,
+        action: "TICKET_ASSIGNED",
+        actorEmail: adminEmail,
+      },
+    });
+    return { success: true, ticket: { ...ticket, submittedAt: ticket.submittedAt.toISOString() } };
+  } catch (error) {
+    console.error("Failed to assign ticket in SQLite", error);
+    return { success: false, error: "Failed to assign ticket." };
+  }
+}
+
+
 /** Register a new user */
 export async function registerUser(email: string, password: string, adminCode?: string) {
   const isAdmin = adminCode && adminCode.trim() === ADMIN_SECRET_CODE;
