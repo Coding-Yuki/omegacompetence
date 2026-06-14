@@ -69,11 +69,22 @@ export async function createTicket(data: { title: string; description: string; p
   }
 }
 
-export async function updateTicketStatus(id: string, newStatus: string, actorEmail: string = "system@omega.com") {
+export async function updateTicketStatus(id: string, newStatus: string, actorEmail: string = "system@omega.com", resolutionNote?: string) {
   try {
     const { prisma } = await import("@/lib/prisma");
-    const ticket = await prisma.ticket.update({ where: { id }, data: { status: newStatus } });
-    await prisma.auditLog.create({ data: { ticketId: ticket.id, action: `STATUS_CHANGED_${newStatus.toUpperCase()}`, actorEmail } });
+    const updateData: any = { status: newStatus };
+    if (resolutionNote !== undefined) {
+      updateData.resolutionNote = resolutionNote;
+    }
+    const ticket = await prisma.ticket.update({ where: { id }, data: updateData });
+    await prisma.auditLog.create({
+      data: {
+        ticketId: ticket.id,
+        action: `STATUS_CHANGED_${newStatus.toUpperCase().replace(/\s+/g, "_")}`,
+        actorEmail,
+        details: resolutionNote || undefined,
+      },
+    });
     return { success: true, ticket: { ...ticket, submittedAt: ticket.submittedAt.toISOString() } };
   } catch (error) {
     console.error("Failed to update ticket status in SQLite", error);
@@ -97,7 +108,7 @@ export async function assignTicket(ticketId: string, adminEmail: string) {
     const { prisma } = await import("@/lib/prisma");
     const ticket = await prisma.ticket.update({
       where: { id: ticketId },
-      data: { assignedTo: adminEmail },
+      data: { assignedTo: adminEmail, status: "in_progress" },
     });
     await prisma.auditLog.create({
       data: {

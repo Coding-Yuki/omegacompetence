@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, Clock, User, FileText, CheckCircle2, AlertCircle, AlertTriangle, 
-  Zap, ShieldCheck, Monitor, Wifi, Lock, Cpu, Server, Activity 
+  Zap, ShieldCheck, Monitor, Wifi, Lock, Cpu, Server, Activity, MessageSquare
 } from "lucide-react";
 import { getAuditLogs } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
+import { STATUS_LABELS, STATUS_BADGE_COLORS } from "@/lib/constants";
 
 interface TicketDetailPanelProps {
   ticket: any;
@@ -21,7 +22,10 @@ function formatLogAction(action: string) {
   if (action === "TICKET_ASSIGNED") return "Ticket pris en charge";
   if (action.startsWith("STATUS_CHANGED_")) {
     const status = action.replace("STATUS_CHANGED_", "").toLowerCase();
-    return status === "resolved" ? "Marqué comme résolu" : "Réouvert";
+    if (status === "resolved") return "Marqué comme résolu";
+    if (status === "cannot_resolve") return "Marqué comme non résoluble";
+    if (status === "in_progress") return "Marqué comme en cours";
+    if (status === "open") return "Réouvert";
   }
   return action;
 }
@@ -99,15 +103,14 @@ export function TicketDetailPanel({ ticket, isOpen, onClose, currentUserEmail }:
                 </h2>
 
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {ticket.status === 'open' ? (
-                    <span className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> Actif
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Résolu
-                    </span>
-                  )}
+                  {(() => {
+                    const c = STATUS_BADGE_COLORS[ticket.status] || STATUS_BADGE_COLORS.open;
+                    return (
+                      <span className={`inline-flex items-center gap-1 ${c.bg} ${c.text} ${c.border} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} /> {STATUS_LABELS[ticket.status] || "Ouvert"}
+                      </span>
+                    );
+                  })()}
 
                   {isHigh && (
                     <Badge className="bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20 px-3 py-1 text-xs font-black uppercase tracking-wider shadow-[0_0_10px_rgba(249,115,22,0.15)]">
@@ -190,6 +193,17 @@ export function TicketDetailPanel({ ticket, isOpen, onClose, currentUserEmail }:
                 </div>
               </div>
 
+              {(ticket.resolutionNote) && (
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest flex items-center gap-1.5">
+                    <MessageSquare className="h-3.5 w-3.5" /> Note de résolution
+                  </h4>
+                  <div className="bg-zinc-500/5 border border-zinc-500/20 p-5 rounded-2xl text-sm leading-relaxed text-foreground/90 whitespace-pre-line select-text">
+                    {ticket.resolutionNote}
+                  </div>
+                </div>
+              )}
+
               <hr className="border-border/30" />
 
               <div className="space-y-4">
@@ -210,15 +224,23 @@ export function TicketDetailPanel({ ticket, isOpen, onClose, currentUserEmail }:
                     {logs.map((log) => {
                       const isCreated = log.action === "TICKET_CREATED";
                       const isAssigned = log.action === "TICKET_ASSIGNED";
+                      const isCannotResolve = log.action === "STATUS_CHANGED_CANNOT_RESOLVE";
+                      const isResolved = log.action === "STATUS_CHANGED_RESOLVED";
+                      const isInProgress = log.action === "STATUS_CHANGED_IN_PROGRESS";
+
+                      let dotColor = "border-green-500 bg-green-500";
+                      if (isCreated) dotColor = "border-blue-500 bg-blue-500";
+                      else if (isAssigned) dotColor = "border-purple-500 bg-purple-500";
+                      else if (isCannotResolve) dotColor = "border-zinc-500 bg-zinc-400";
+                      else if (isResolved) dotColor = "border-green-500 bg-green-500";
+                      else if (isInProgress) dotColor = "border-amber-500 bg-amber-400";
+
+                      const isStatusChange = log.action.startsWith("STATUS_CHANGED_");
                       
                       return (
                         <div key={log.id} className="relative text-xs">
-                          <span className={`absolute -left-[21px] top-0.5 h-3.5 w-3.5 rounded-full border-2 bg-popover flex items-center justify-center ${
-                            isCreated ? "border-blue-500" : isAssigned ? "border-purple-500" : "border-green-500"
-                          }`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${
-                              isCreated ? "bg-blue-500" : isAssigned ? "bg-purple-500" : "bg-green-500"
-                            }`} />
+                          <span className={`absolute -left-[21px] top-0.5 h-3.5 w-3.5 rounded-full border-2 bg-popover flex items-center justify-center ${dotColor.split(" ")[0]}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${dotColor.split(" ")[1]}`} />
                           </span>
                           <div className="space-y-1">
                             <div className="font-semibold text-foreground">
@@ -233,6 +255,11 @@ export function TicketDetailPanel({ ticket, isOpen, onClose, currentUserEmail }:
                                 })}
                               </span>
                             </div>
+                            {log.details && (
+                              <div className="mt-1 text-[11px] text-muted-foreground bg-muted/30 border border-border/30 p-2 rounded-lg leading-relaxed whitespace-pre-line">
+                                {log.details}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

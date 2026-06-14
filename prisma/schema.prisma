@@ -23,6 +23,7 @@ model Ticket {
   priority       String
   seminarUrgency Boolean     @default(false)
   status         String      @default("open")
+  resolutionNote String?
   submittedBy    String
   assignedTo     String?
   submittedAt    DateTime    @default(now())
@@ -34,6 +35,7 @@ model AuditLog {
   ticketId    String
   action      String
   actorEmail  String
+  details     String?
   timestamp   DateTime @default(now())
   ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }

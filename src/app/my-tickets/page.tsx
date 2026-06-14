@@ -4,16 +4,16 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/navbar";
+import { AdminSidebar, SidebarNavItem } from "@/components/admin-sidebar";
 import { getTickets } from "@/app/actions";
 import { CommandMenu } from "@/components/command-menu";
 import { TicketDetailPanel } from "@/components/TicketDetailPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import { SmartTicketForm } from "@/components/SmartTicketForm";
-import { AuroraBackground } from "@/components/AuroraBackground";
-
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, CheckCircle2, Zap, Clock, ShieldCheck, Monitor, Wifi, Lock, Cpu, Server, AlertTriangle, AlertCircle } from "lucide-react";
+import { PlusCircle, CheckCircle2, Zap, Clock, ShieldCheck, Monitor, Wifi, Lock, Cpu, Server, AlertTriangle, AlertCircle, MessageSquare, Ticket, User2, Construction } from "lucide-react";
+import { STATUS_LABELS, STATUS_BADGE_COLORS } from "@/lib/constants";
+
 
 function formatTimeElapsed(dateString: string) {
   const date = new Date(dateString);
@@ -36,16 +36,30 @@ const staggerContainer = { hidden: { opacity: 0 }, show: { opacity: 1, transitio
 
 const springCard = { hidden: { opacity: 0, y: 30, scale: 0.95 }, show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } } } as const;
 
+const employeeNavItems: readonly SidebarNavItem[] = [
+  { id: "mes-tickets", label: "Mes Tickets", icon: Ticket },
+  { id: "nouveau-ticket", label: "Soumettre", icon: PlusCircle },
+  { id: "profil", label: "Profil", icon: User2 },
+];
+
+const sectionTitleMap: Record<string, string> = {
+  "mes-tickets": "Mes Tickets",
+  "nouveau-ticket": "Nouveau ticket",
+  profil: "Profil",
+};
+
 export default function EmployeeDashboard() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
 
   const [tickets, setTickets] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  const [activeSection, setActiveSection] = useState("mes-tickets");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const mainRef = useRef<HTMLElement>(null);
 
@@ -87,8 +101,8 @@ export default function EmployeeDashboard() {
   const userName = (user as any)?.email?.split("@")[0] ?? "Agent";
 
   const handleSuccess = () => {
-    setDialogOpen(false);
     loadTickets();
+    setActiveSection("mes-tickets");
   };
 
   if (!mounted || loading || !user || role !== "employee") {
@@ -99,6 +113,7 @@ export default function EmployeeDashboard() {
     );
   }
 
+  const sidebarWidth = sidebarCollapsed ? 64 : 240;
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-x-hidden text-foreground selection:bg-blue-500/30 page-wallpaper">
@@ -106,170 +121,208 @@ export default function EmployeeDashboard() {
         <div className="mesh-bg-gradient opacity-60 dark:opacity-100" />
         <div className="bg-grid-modern opacity-40 dark:opacity-60" />
       </div>
-      <Navbar />
 
-      <main 
-        ref={mainRef}
-        onMouseMove={handleMouseMove}
-        className="flex-1 container mx-auto px-4 md:px-8 py-10 max-w-5xl relative z-10"
+      <AdminSidebar
+        navItems={employeeNavItems}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+
+      <div
+        className="flex-1 flex flex-col transition-all duration-300 ease-out"
+        style={{ paddingLeft: sidebarWidth }}
       >
-        <motion.div variants={staggerContainer} initial="hidden" animate="show">
-          <motion.div variants={springCard} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-primary/80 font-semibold mb-2">Bienvenue</p>
-              <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">Bonjour, {userName}</h1>
-              <p className="text-muted-foreground text-sm max-w-xl">Voici vos tickets actifs. Soumettez un nouveau ticket dès que vous observez un incident.</p>
-            </div>
+        <Navbar variant="minimal" sectionTitle={sectionTitleMap[activeSection] || "Mes Tickets"} />
 
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger className="group inline-flex items-center justify-center rounded-2xl bg-primary hover:opacity-90 text-primary-foreground shadow-md transition-all h-12 px-6 font-bold border-none cursor-pointer">
-                  <PlusCircle className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-500" />
-                  Soumettre un ticket
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[700px] bg-popover/90 backdrop-blur-3xl border-border text-popover-foreground shadow-2xl p-0 overflow-hidden rounded-[2.5rem]">
-                <div className="p-8 relative">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
-                  
-                  <DialogHeader className="mb-6">
-                    <DialogTitle className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
-                      <ShieldCheck className="h-8 w-8 text-blue-500" /> Anomalie
-                    </DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground mt-1">
-                      Votre signalement sera traité immédiatement.
-                    </DialogDescription>
-                  </DialogHeader>
+        <main
+          ref={mainRef}
+          onMouseMove={handleMouseMove}
+          className="flex-1 container mx-auto px-4 md:px-8 py-10 max-w-5xl relative z-10"
+        >
+          <motion.div variants={staggerContainer} initial="hidden" animate="show" key={activeSection}>
 
-                  <SmartTicketForm userEmail={(user as any).email as string} onSuccess={handleSuccess} />
-                  
-                </div>
-              </DialogContent>
-            </Dialog>
-          </motion.div>
+            {activeSection === "mes-tickets" && (
+              <>
+                <motion.div variants={springCard} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.4em] text-primary/80 font-semibold mb-2">Bienvenue</p>
+                    <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">Bonjour, {userName}</h1>
+                    <p className="text-muted-foreground text-sm max-w-xl">Voici vos tickets actifs.</p>
+                  </div>
 
-          {fetching ? (
-            <div className="grid gap-5">
-              {[1, 2, 3].map(i => <div key={i} className="h-28 w-full rounded-[2rem] bg-muted/50 animate-pulse border border-border/50" />)}
-            </div>
-          ) : tickets.length === 0 ? (
-            <motion.div variants={springCard} className="mt-20 flex flex-col items-center text-center gap-6">
-              <motion.div 
-                animate={{ y: [0, -20, 0], scale: [1, 1.05, 1] }} 
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="relative mb-4"
-              >
-                <div className="absolute inset-0 bg-blue-500/20 blur-[60px] rounded-full scale-150" />
-                <div className="h-28 w-28 rounded-full border border-border bg-card/50 backdrop-blur-xl flex items-center justify-center relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
-                  <CheckCircle2 className="h-10 w-10 text-blue-400 opacity-90" />
-                </div>
-              </motion.div>
-              <h3 className="text-3xl font-black text-foreground mb-2 tracking-tight">Votre file est vide</h3>
-              <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
-                Aucun ticket n'a encore été créé. Lancez la maintenance en soumettant une nouvelle demande.
-              </p>
-              <button onClick={() => setDialogOpen(true)} className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/20 transition hover:bg-primary/90">
-                Soumettre un ticket
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div variants={staggerContainer} className="grid gap-5">
-              <AnimatePresence>
-                {tickets.map((ticket) => {
-                  const timeElapsed = formatTimeElapsed(ticket.submittedAt);
-                  const isHigh = ticket.priority === 'high';
-                  const isMedium = ticket.priority === 'medium';
-                  const isLow = ticket.priority === 'low';
-                  
-                  return (
-                    <motion.div key={ticket.id} variants={springCard} layout>
-                      <div
-                        onClick={() => { setSelectedTicket(ticket); setIsPanelOpen(true); }}
-                        className={`bento-card p-5 flex flex-col gap-4 group rounded-3xl border transition-all relative overflow-hidden cursor-pointer ${
-                          ticket.seminarUrgency && ticket.status === 'open' 
-                            ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/30' 
-                            : 'bg-card/30 border-border/50 hover:border-primary/30'
-                        }`}
-                      >
-                        {ticket.seminarUrgency && ticket.status === 'open' && (
-                          <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
-                        )}
+                  <button
+                    onClick={() => setActiveSection("nouveau-ticket")}
+                    className="group inline-flex items-center justify-center rounded-2xl bg-primary hover:opacity-90 text-primary-foreground shadow-md transition-all h-12 px-6 font-bold border-none cursor-pointer"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-500" />
+                    Soumettre un ticket
+                  </button>
+                </motion.div>
 
-                        <div className="flex flex-col gap-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-semibold text-lg text-foreground truncate">{ticket.title}</h3>
-                                {ticket.status === 'open' ? (
-                                  <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400" /> En traitement
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Résolu
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{ticket.description}</p>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
-                              <span className="inline-flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-full border border-border/50 uppercase tracking-wider">
-                                {timeElapsed}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border/30 pt-3 text-sm">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center gap-1 bg-muted/50 border border-border/50 px-3 py-1 rounded-full text-[11px] uppercase tracking-wider">
-                                {ticket.category === 'hardware' && <Monitor className="h-3 w-3 text-blue-400" />}
-                                {ticket.category === 'network' && <Wifi className="h-3 w-3 text-purple-400" />}
-                                {ticket.category === 'auth' && <Lock className="h-3 w-3 text-orange-400" />}
-                                {ticket.category === 'software' && <Cpu className="h-3 w-3 text-pink-400" />}
-                                {ticket.category === 'other' && <Server className="h-3 w-3 text-muted-foreground" />}
-                                {ticket.category || 'autre'}
-                              </span>
-                              {isHigh && (
-                                <span className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-300 border border-orange-500/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                                  <AlertTriangle className="h-3 w-3" /> Haute
-                                </span>
-                              )}
-                              {isMedium && (
-                                <span className="inline-flex items-center gap-1 bg-yellow-500/10 text-amber-300 border border-yellow-500/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                                  <Zap className="h-3 w-3" /> Moyenne
-                                </span>
-                              )}
-                              {isLow && (
-                                <span className="inline-flex items-center gap-1 bg-muted/60 text-muted-foreground border border-border/40 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider">
-                                  <ShieldCheck className="h-3 w-3" /> Faible
-                                </span>
-                              )}
-                              {ticket.assignedTo ? (
-                                <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider">
-                                  Pris en charge par {ticket.assignedTo.split('@')[0]}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 bg-muted/30 text-muted-foreground border border-border/30 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider">
-                                  En attente d'assignation
-                                </span>
-                              )}
-                            </div>
-
-                            {ticket.seminarUrgency && (
-                              <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.15)]">
-                                Séminaire
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                {fetching ? (
+                  <div className="grid gap-5">
+                    {[1, 2, 3].map(i => <div key={i} className="h-28 w-full rounded-[2rem] bg-muted/50 animate-pulse border border-border/50" />)}
+                  </div>
+                ) : tickets.length === 0 ? (
+                  <motion.div variants={springCard} className="mt-20 flex flex-col items-center text-center gap-6">
+                    <motion.div
+                      animate={{ y: [0, -20, 0], scale: [1, 1.05, 1] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                      className="relative mb-4"
+                    >
+                      <div className="absolute inset-0 bg-blue-500/20 blur-[60px] rounded-full scale-150" />
+                      <div className="h-28 w-28 rounded-full border border-border bg-card/50 backdrop-blur-xl flex items-center justify-center relative z-10 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
+                        <CheckCircle2 className="h-10 w-10 text-blue-400 opacity-90" />
                       </div>
                     </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </motion.div>
+                    <h3 className="text-3xl font-black text-foreground mb-2 tracking-tight">Votre file est vide</h3>
+                    <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
+                      Aucun ticket n'a encore été créé. Lancez la maintenance en soumettant une nouvelle demande.
+                    </p>
+                    <button onClick={() => setActiveSection("nouveau-ticket")} className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/20 transition hover:bg-primary/90">
+                      Soumettre un ticket
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div variants={staggerContainer} className="grid gap-5">
+                    <AnimatePresence>
+                      {tickets.map((ticket) => {
+                        const timeElapsed = formatTimeElapsed(ticket.submittedAt);
+                        const isHigh = ticket.priority === 'high';
+                        const isMedium = ticket.priority === 'medium';
+                        const isLow = ticket.priority === 'low';
+                        
+                        return (
+                          <motion.div key={ticket.id} variants={springCard} layout>
+                            <div
+                              onClick={() => { setSelectedTicket(ticket); setIsPanelOpen(true); }}
+                              className={`bento-card p-5 flex flex-col gap-4 group rounded-3xl border transition-all relative overflow-hidden cursor-pointer ${
+                                ticket.seminarUrgency && (ticket.status === 'open' || ticket.status === 'in_progress') 
+                                  ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/30' 
+                                  : 'bg-card/30 border-border/50 hover:border-primary/30'
+                              }`}
+                            >
+                              {ticket.seminarUrgency && (ticket.status === 'open' || ticket.status === 'in_progress') && (
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]" />
+                              )}
 
-          )}
-        </motion.div>
-      </main>
+                              <div className="flex flex-col gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                  <div className="space-y-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <h3 className="font-semibold text-lg text-foreground truncate">{ticket.title}</h3>
+                                      {(() => {
+                                        const c = STATUS_BADGE_COLORS[ticket.status] || STATUS_BADGE_COLORS.open;
+                                        return (
+                                          <span className={`inline-flex items-center gap-1.5 ${c.bg} ${c.text} ${c.border} px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider`}>
+                                            <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} /> {STATUS_LABELS[ticket.status] || "Ouvert"}
+                                          </span>
+                                        );
+                                      })()}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{ticket.description}</p>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                                    <span className="inline-flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-full border border-border/50 uppercase tracking-wider">
+                                      {timeElapsed}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {ticket.resolutionNote && (
+                                  <div className="flex items-start gap-2 text-xs text-muted-foreground bg-zinc-500/5 border border-zinc-500/15 p-3 rounded-xl">
+                                    <MessageSquare className="h-3.5 w-3.5 mt-0.5 shrink-0 text-zinc-400" />
+                                    <span className="leading-relaxed whitespace-pre-line">{ticket.resolutionNote}</span>
+                                  </div>
+                                )}
+
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border/30 pt-3 text-sm">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 bg-muted/50 border border-border/50 px-3 py-1 rounded-full text-[11px] uppercase tracking-wider">
+                                      {ticket.category === 'hardware' && <Monitor className="h-3 w-3 text-blue-400" />}
+                                      {ticket.category === 'network' && <Wifi className="h-3 w-3 text-purple-400" />}
+                                      {ticket.category === 'auth' && <Lock className="h-3 w-3 text-orange-400" />}
+                                      {ticket.category === 'software' && <Cpu className="h-3 w-3 text-pink-400" />}
+                                      {ticket.category === 'other' && <Server className="h-3 w-3 text-muted-foreground" />}
+                                      {ticket.category || 'autre'}
+                                    </span>
+                                    {isHigh && (
+                                      <span className="inline-flex items-center gap-1 bg-orange-500/10 text-orange-300 border border-orange-500/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                        <AlertTriangle className="h-3 w-3" /> Haute
+                                      </span>
+                                    )}
+                                    {isMedium && (
+                                      <span className="inline-flex items-center gap-1 bg-yellow-500/10 text-amber-300 border border-yellow-500/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                        <Zap className="h-3 w-3" /> Moyenne
+                                      </span>
+                                    )}
+                                    {isLow && (
+                                      <span className="inline-flex items-center gap-1 bg-muted/60 text-muted-foreground border border-border/40 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider">
+                                        <ShieldCheck className="h-3 w-3" /> Faible
+                                      </span>
+                                    )}
+                                    {ticket.assignedTo ? (
+                                      <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider">
+                                        Pris en charge par {ticket.assignedTo.split('@')[0]}
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 bg-muted/30 text-muted-foreground border border-border/30 px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider">
+                                        En attente d'assignation
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {ticket.seminarUrgency && (
+                                    <span className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.15)]">
+                                      Séminaire
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </>
+            )}
+
+            {activeSection === "nouveau-ticket" && (
+              <motion.div variants={springCard} className="mx-auto max-w-3xl">
+                <div className="mb-8">
+                  <h1 className="text-4xl lg:text-5xl font-black tracking-tight mb-2 text-foreground">
+                    Signaler une <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">anomalie</span>
+                  </h1>
+                  <p className="text-muted-foreground text-sm max-w-xl">
+                    Votre signalement sera traité immédiatement par l'équipe technique.
+                  </p>
+                </div>
+
+                <div className="rounded-[2rem] border border-border/50 bg-card/30 backdrop-blur-xl p-6 md:p-8">
+                  <SmartTicketForm userEmail={(user as any).email as string} onSuccess={handleSuccess} />
+                </div>
+              </motion.div>
+            )}
+
+            {activeSection === "profil" && (
+              <motion.div variants={springCard} className="flex flex-col items-center justify-center py-32 text-center">
+                <div className="h-24 w-24 rounded-full bg-muted/50 border border-border/50 flex items-center justify-center mb-6">
+                  <User2 className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h2 className="text-3xl font-black text-foreground tracking-tight mb-3">Profil</h2>
+                <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
+                  Cette section est en cours de développement. Revenez bientôt pour gérer vos informations personnelles.
+                </p>
+              </motion.div>
+            )}
+
+          </motion.div>
+        </main>
+      </div>
 
       <CommandMenu />
       <TicketDetailPanel
