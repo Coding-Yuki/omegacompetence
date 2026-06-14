@@ -21,12 +21,12 @@ export function HoloLock({ score }: HoloLockProps) {
     switch (score) {
       case 0:
       case 1:
-        return { ring: "#ef4444", glow: "rgba(239, 68, 68, 0.5)", bg: "rgba(239, 68, 68, 0.1)" }; // Red
+        return { ring: "#ef4444", glow: "rgba(239, 68, 68, 0.5)", bg: "rgba(239, 68, 68, 0.1)" };
       case 2:
       case 3:
-        return { ring: "#f59e0b", glow: "rgba(245, 158, 11, 0.5)", bg: "rgba(245, 158, 11, 0.1)" }; // Gold
+        return { ring: "#f59e0b", glow: "rgba(245, 158, 11, 0.5)", bg: "rgba(245, 158, 11, 0.1)" };
       case 4:
-        return { ring: "#10b981", glow: "rgba(16, 185, 129, 0.8)", bg: "rgba(16, 185, 129, 0.2)" }; // Emerald Pulsing
+        return { ring: "#10b981", glow: "rgba(16, 185, 129, 0.8)", bg: "rgba(16, 185, 129, 0.2)" };
       default:
         return { ring: "var(--border)", glow: "transparent", bg: "transparent" };
     }
@@ -36,7 +36,6 @@ export function HoloLock({ score }: HoloLockProps) {
 
   return (
     <div className="relative flex items-center justify-center w-14 h-14 shrink-0">
-      {/* Background ambient glow */}
       <motion.div 
         animate={{ 
           backgroundColor: colors.bg, 

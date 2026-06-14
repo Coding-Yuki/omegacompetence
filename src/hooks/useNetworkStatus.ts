@@ -7,7 +7,6 @@ export function useNetworkStatus() {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    // Initial status
     if (typeof navigator !== "undefined") {
       setIsOnline(navigator.onLine);
     }

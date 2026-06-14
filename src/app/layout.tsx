@@ -25,7 +25,6 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground tracking-[-0.01em]`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <div className="relative flex min-h-screen flex-col" suppressHydrationWarning>
-            {/* Noise Texture Overlay — luxury grain effect */}
             <div className="noise-overlay" aria-hidden="true" />
             {children}
           </div>

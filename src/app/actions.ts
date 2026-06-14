@@ -6,53 +6,11 @@ import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
-// JWT configuration
-const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
-const JWT_EXPIRES_IN = "7d"; // 7 days
-
-const ADMIN_SECRET_CODE = "OMEGA-COMPETENCE-2026";
-
-export async function assignUserRole(uid: string, email: string, providedCode?: string) {
-  try {
-    const { prisma } = await import("@/lib/prisma");
-    const isAdmin = providedCode === ADMIN_SECRET_CODE;
-    if (providedCode && !isAdmin) {
-      return { success: false, error: "Invalid IT Support Access Code." };
-    }
-    const role = isAdmin ? "admin" : "employee";
-    const user = await prisma.user.upsert({
-      where: { id: uid },
-      update: { role, email },
-      create: { id: uid, email, role, password: "LEGACY" },
-    });
-    return { success: true, role: user.role };
-  } catch (error) {
-    console.error("Failed to set user role in SQLite", error);
-    console.error("DETAILED_ERROR_LOG:", error);
-    return { success: false, error: "Internal Server Error while setting role." };
-  }
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required.");
 }
-
-export async function getUserRole(uid: string, email: string) {
-  try {
-    const { prisma } = await import("@/lib/prisma");
-    let user;
-    try {
-      user = await prisma.user.findUnique({ where: { id: uid } });
-    } catch (e: any) {
-      console.error('[getUserRole] Prisma findUnique error:', e);
-      return { success: false, error: String(e?.message ?? e), role: "employee" as const };
-    }
-    if (!user) {
-      user = await prisma.user.create({ data: { id: uid, email, role: "employee", password: "LEGACY" } });
-    }
-    return { success: true, role: user.role };
-  } catch (error) {
-    console.error("Failed to get user role from SQLite", error);
-    console.error('[getUserRole] Outer catch error:', error);
-    return { success: false, role: "employee" as const };
-  }
-}
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = "7d";
 
 export async function getTickets(userEmail: string) {
   try {
@@ -71,22 +29,10 @@ export async function getTickets(userEmail: string) {
 export async function getAllTickets() {
   try {
     const { prisma } = await import("@/lib/prisma");
-    let tickets = await prisma.ticket.findMany({
+    const tickets = await prisma.ticket.findMany({
       orderBy: { submittedAt: "desc" },
       include: { auditLogs: { orderBy: { timestamp: "desc" } } },
     });
-    if (tickets.length === 0) {
-      const mockTickets = [
-        { id: "tick-001", title: "Accès VPN impossible - Profil bloqué", description: "Impossible de se connecter au VPN d'entreprise depuis ce matin. Le message indique que le profil est bloqué.", priority: "high", status: "open", submittedBy: "direction@omega.com", submittedAt: new Date(Date.now() - 3600000), category: "network", seminarUrgency: true },
-        { id: "tick-002", title: "Panne imprimante réseau au 2ème étage", description: "L'imprimante réseau principale du 2ème étage ne répond plus. Impossible d'imprimer des documents.", priority: "medium", status: "open", submittedBy: "support@omega.com", submittedAt: new Date(Date.now() - 7200000), category: "hardware", seminarUrgency: false },
-        { id: "tick-003", title: "Problème d'activation Office 365 Pro", description: "Une licence Office 365 Pro demande d'être activée à nouveau, mais l'adresse e-mail professionnelle n'est pas reconnue.", priority: "low", status: "resolved", submittedBy: "rh@omega.com", submittedAt: new Date(Date.now() - 14400000), category: "software", seminarUrgency: false },
-        { id: "tick-004", title: "Demande de matériel : Clavier mécanique", description: "Demande de clavier mécanique pour des raisons d'ergonomie suite à des douleurs aux poignets.", priority: "low", status: "open", submittedBy: "employee@test.com", submittedAt: new Date(Date.now() - 28800000), category: "hardware", seminarUrgency: false },
-        { id: "tick-005", title: "Mise à jour système ERP OMEGA crashé", description: "Le serveur de l'ERP OMEGA s'est arrêté brutalement après la dernière mise à jour de sécurité automatique.", priority: "high", status: "open", submittedBy: "admin@omega.com", submittedAt: new Date(Date.now() - 86400000), category: "software", seminarUrgency: false }
-      ];
-      await prisma.ticket.createMany({ data: mockTickets });
-      await prisma.auditLog.create({ data: { ticketId: "tick-001", action: "TICKET_CREATED", actorEmail: "direction@omega.com" } });
-      tickets = await prisma.ticket.findMany({ orderBy: { submittedAt: "desc" }, include: { auditLogs: { orderBy: { timestamp: "desc" } } } });
-    }
     return {
       success: true,
       tickets: tickets.map(t => ({
@@ -168,9 +114,8 @@ export async function assignTicket(ticketId: string, adminEmail: string) {
 }
 
 
-/** Register a new user */
 export async function registerUser(email: string, password: string, adminCode?: string) {
-  const isAdmin = adminCode && adminCode.trim() === ADMIN_SECRET_CODE;
+  const isAdmin = adminCode && adminCode.trim() === process.env.ADMIN_SECRET_CODE;
   if (adminCode && !isAdmin) {
     return { success: false, error: "Invalid admin code" };
   }
@@ -185,7 +130,6 @@ export async function registerUser(email: string, password: string, adminCode?: 
   }
 }
 
-/** Login and set JWT cookie */
 export async function loginUser(email: string, password: string) {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -201,13 +145,11 @@ export async function loginUser(email: string, password: string) {
   }
 }
 
-/** Logout – clear cookie */
 export async function logoutUser() {
   (await cookies()).delete("authToken");
   return { success: true };
 }
 
-/** Get current session from JWT cookie */
 export async function getSession() {
   const token = (await cookies()).get("authToken")?.value;
   if (!token) return { authenticated: false };

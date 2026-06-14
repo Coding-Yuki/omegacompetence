@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 export function AuroraBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 bg-zinc-950">
-      {/* Noise Overlay */}
       <div 
         className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
         style={{
@@ -13,7 +12,6 @@ export function AuroraBackground() {
         }}
       />
 
-      {/* Aurora Orbs */}
       <motion.div
         animate={{
           scale: [1, 1.2, 1],

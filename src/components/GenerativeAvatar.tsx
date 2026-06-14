@@ -13,7 +13,6 @@ export function GenerativeAvatar({ name }: { name: string }) {
 
   return (
     <div className="relative flex items-center justify-center w-24 h-24 mx-auto mb-6">
-      {/* Dynamic Glow */}
       <motion.div 
         animate={{
           scale: hasName ? [1, 1.2, 1] : 1,
@@ -23,7 +22,6 @@ export function GenerativeAvatar({ name }: { name: string }) {
         className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary to-blue-600 blur-xl"
       />
       
-      {/* Glass Orb */}
       <motion.div 
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

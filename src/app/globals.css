@@ -47,7 +47,6 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Animations Neo Intelligence */
   --animate-mesh-spin: mesh-spin 30s linear infinite;
   --animate-aurora-breathe: aurora-breathe 15s ease-in-out infinite alternate;
   --animate-aurora-drift: aurora-drift 20s ease-in-out infinite alternate;
@@ -89,11 +88,7 @@
   }
 }
 
-/* ============================================================
-   NEO GLASS LIGHT MODE (Luxury & Warm)
-   ============================================================ */
 :root {
-  /* Warm White & Off-White Backgrounds */
   --background: 0 0% 99%;
   --foreground: 240 10% 8%;
   
@@ -102,13 +97,11 @@
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 8%;
 
-  /* Soft Graphite & Subtle Red */
   --primary: 355 85% 48%;
   --primary-foreground: 0 0% 100%;
   --primary-glow: hsla(355, 85%, 48%, 0.15);
   --primary-glow-strong: hsla(355, 85%, 48%, 0.3);
   
-  /* Extremely soft borders and backgrounds */
   --secondary: 240 5% 96%;
   --secondary-foreground: 240 6% 15%;
   --muted: 240 5% 94%;
@@ -125,7 +118,6 @@
   
   --radius: 1.25rem;
 
-  /* Premium Depth Tokens */
   --glass-bg: rgba(255, 255, 255, 0.75);
   --glass-border: rgba(0, 0, 0, 0.04);
   --glass-shadow: 
@@ -144,11 +136,7 @@
   --skeleton-bg: linear-gradient(90deg, #f4f4f5 25%, #e4e4e7 50%, #f4f4f5 75%);
 }
 
-/* ============================================================
-   NEO GLASS DARK MODE (Futuristic Cinematic)
-   ============================================================ */
 .dark {
-  /* Deepest Space Black */
   --background: 240 5% 2%;
   --foreground: 0 0% 98%;
   
@@ -157,7 +145,6 @@
   --popover: 240 5% 4%;
   --popover-foreground: 0 0% 98%;
 
-  /* Neon Accents */
   --primary: 355 85% 55%;
   --primary-foreground: 0 0% 100%;
   --primary-glow: hsla(355, 85%, 55%, 0.25);
@@ -177,7 +164,6 @@
   --input: 240 5% 12%;
   --ring: 355 85% 55%;
 
-  /* Premium Depth Tokens */
   --glass-bg: rgba(15, 15, 17, 0.6);
   --glass-border: rgba(255, 255, 255, 0.05);
   --glass-shadow: 
@@ -205,16 +191,10 @@
     @apply antialiased bg-background text-foreground tracking-tight selection:bg-primary/20 selection:text-primary;
   }
 
-  /* ============================================================
-     SILICON VALLEY PHYSICS (Ultra Smooth Transitions)
-     ============================================================ */
   a, button, input, select, textarea, .glass-deep, .bento-card, .neo-button {
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* ============================================================
-     SMART FOCUS RINGS
-     ============================================================ */
   input:focus-visible, textarea:focus-visible, select:focus-visible {
     box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--primary-glow-strong), 0 10px 30px var(--primary-glow) !important;
     border-color: var(--primary) !important;
@@ -222,9 +202,6 @@
     transform: translateY(-1px);
   }
 
-  /* ============================================================
-     GLASSMORPHISM AVANCÉ (Apple Vision Pro Style)
-     ============================================================ */
   .glass-panel {
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(160%);
@@ -233,9 +210,6 @@
     box-shadow: var(--glass-shadow);
   }
 
-  /* ============================================================
-     BENTO CARDS (Linear Style)
-     ============================================================ */
   .bento-card {
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
@@ -269,9 +243,6 @@
   }
   .bento-card:hover::before { opacity: 1; }
 
-  /* ============================================================
-     MAGNETIC BUTTONS (Stripe/Framer Style)
-     ============================================================ */
   .neo-button {
     position: relative;
     overflow: hidden;
@@ -288,9 +259,6 @@
     left: 150%;
   }
 
-  /* ============================================================
-     GRID & MESH BACKGROUNDS (Vercel Style)
-     ============================================================ */
   .mesh-bg {
     position: absolute;
     inset: 0;
@@ -367,9 +335,6 @@
     z-index: 0;
   }
 
-  /* ============================================================
-     TYPOGRAPHY GRADIENTS
-     ============================================================ */
   .text-gradient-hero {
     background: linear-gradient(135deg, var(--foreground) 30%, var(--muted-foreground) 100%);
     -webkit-background-clip: text;
@@ -386,9 +351,6 @@
     background-size: 200% 200%;
   }
 
-  /* ============================================================
-     CUSTOM SCROLLBAR LUXURY
-     ============================================================ */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { 

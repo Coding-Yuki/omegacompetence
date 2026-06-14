@@ -71,7 +71,7 @@ export default function AuthPage() {
 
 
   useEffect(() => {
-    if (!user || role) return; // Skip if no user or role is already set
+    if (!user || role) return;
     
     const timeoutId = setTimeout(() => {
       if (!hasRedirectedRef.current) {

@@ -92,15 +92,7 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterInput) {
     setIsLoading(true);
     try {
-      const ADMIN_SECRET_CODE = "OMEGA-COMPETENCE-2026";
-      const trimmedCode = data.adminCode?.trim();
-      if (trimmedCode && trimmedCode !== ADMIN_SECRET_CODE) {
-        toast.error("Code invalide", { description: "Le code d'accès administrateur est incorrect." });
-        setIsLoading(false);
-        return;
-      }
-
-      const res = await registerUser(data.email, data.password, trimmedCode);
+      const res = await registerUser(data.email, data.password, data.adminCode?.trim());
       if (!res.success) {
         toast.error("Erreur d'inscription", { description: res.error });
         setIsLoading(false);

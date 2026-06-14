@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-// Firebase imports removed – auth will be handled via JWT.
 import { logoutUser } from "@/app/actions";
 import { LogOut, Shield, User2, Zap } from "lucide-react";
 import Image from "next/image";
